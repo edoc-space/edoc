@@ -36,6 +36,7 @@ type Props = {
     site?: SiteInfo;
     navigation?: NavigationItem[];
     footer?: SiteFooterData;
+    locale?: SiteLocaleItem;
     locales?: SiteLocaleItem[];
     ui?: SiteUiText;
   };
@@ -89,6 +90,8 @@ export default function PageShow({ app, page, web, meta }: Props) {
               className="page-document markdown-body"
               module={page.document.module}
               heroBefore={breadcrumbsNode}
+              locale={web?.locale}
+              ui={web?.ui}
             />
           ) : (
             <>

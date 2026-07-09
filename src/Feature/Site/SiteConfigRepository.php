@@ -7,6 +7,7 @@ namespace App\Feature\Site;
 use JsonException;
 use PhpSoftBox\Storage\Storage;
 
+use function array_filter;
 use function array_is_list;
 use function array_key_exists;
 use function array_values;
@@ -224,7 +225,7 @@ final readonly class SiteConfigRepository
         $navigation = $config['navigation'] ?? null;
         if (!is_array($navigation)) {
             return [
-                ...$sources['pages'],
+                ...$this->headerItems($sources['pages']),
                 ...$sources['docs'],
             ];
         }
@@ -347,6 +348,10 @@ final readonly class SiteConfigRepository
                 }
 
                 foreach ($sources[$source] as $sourceItem) {
+                    if ($footerColumn === null && ($sourceItem['header_hidden'] ?? false) === true) {
+                        continue;
+                    }
+
                     $expanded[] = $footerColumn === null
                         ? $sourceItem
                         : [...$sourceItem, 'footer_column' => $footerColumn];
@@ -395,6 +400,18 @@ final readonly class SiteConfigRepository
         }
 
         return $result;
+    }
+
+    /**
+     * @param list<array<string,mixed>> $items
+     * @return list<array<string,mixed>>
+     */
+    private function headerItems(array $items): array
+    {
+        return array_values(array_filter(
+            $items,
+            static fn (array $item): bool => ($item['header_hidden'] ?? false) !== true,
+        ));
     }
 
     /**
@@ -583,6 +600,8 @@ final readonly class SiteConfigRepository
                 'searchClose'                => 'Close search',
                 'searchStart'                => 'Start typing to search documentation.',
                 'searchEmpty'                => 'No results',
+                'searchLoading'              => 'Loading search...',
+                'searchError'                => 'Search is temporarily unavailable',
                 'githubAria'                 => 'Open GitHub repository',
                 'versionsLabel'              => 'Documentation version',
                 'version'                    => 'Version',
@@ -636,6 +655,8 @@ final readonly class SiteConfigRepository
             'searchClose'                => 'Закрыть поиск',
             'searchStart'                => 'Начните вводить запрос для поиска по документации.',
             'searchEmpty'                => 'Ничего не найдено',
+            'searchLoading'              => 'Загрузка поиска...',
+            'searchError'                => 'Поиск временно недоступен',
             'githubAria'                 => 'Открыть репозиторий GitHub',
             'versionsLabel'              => 'Версия документации',
             'version'                    => 'Версия',

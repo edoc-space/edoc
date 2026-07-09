@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Action\HealthAction;
 use App\Http\Action\HomeAction;
+use App\Http\Action\Web\Documentation\SearchIndexAction;
 use App\Http\Action\Web\Documentation\ShowDocumentationAction;
 use App\Http\Action\Web\Page\ShowPageAction;
 use PhpSoftBox\Profiler\Http\ProfilerReportHandler;
@@ -55,6 +56,7 @@ $localizedRoutePrefixes = static function () use ($normalizeRouteLocale): array 
 
 return static function (RouteCollector $routes) use ($localizedRoutePrefixes): void {
     $routes->get('/', HomeAction::class)->name('home');
+    $routes->get('/docs/search-index.json', SearchIndexAction::class)->name('docs.search-index');
     $routes->get('/docs/{path*?}', ShowDocumentationAction::class)->name('docs.show');
     $routes->get('/health', HealthAction::class)->name('health');
     $routes->get('/__profiler/api/traces', ProfilerReportHandler::class)->name('profiler.traces');
@@ -64,6 +66,9 @@ return static function (RouteCollector $routes) use ($localizedRoutePrefixes): v
         $routes->get($prefix, HomeAction::class)
             ->default('locale', $locale)
             ->name('localized.' . $locale . '.home');
+        $routes->get($prefix . '/docs/search-index.json', SearchIndexAction::class)
+            ->default('locale', $locale)
+            ->name('localized.' . $locale . '.docs.search-index');
         $routes->get($prefix . '/docs/{path*?}', ShowDocumentationAction::class)
             ->default('locale', $locale)
             ->name('localized.' . $locale . '.docs.show');

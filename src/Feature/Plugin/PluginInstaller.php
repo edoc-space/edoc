@@ -32,7 +32,7 @@ use const JSON_UNESCAPED_SLASHES;
 
 final readonly class PluginInstaller
 {
-    private const string DEFAULT_MANIFEST = 'local/storage/edoc/plugins.json';
+    private const string DEFAULT_MANIFEST    = 'local/storage/edoc/plugins.json';
     private const string DEFAULT_PLUGINS_DIR = 'local/plugins';
 
     public function __construct(
@@ -188,8 +188,8 @@ final readonly class PluginInstaller
     private function runPackageManagerInstall(string $packageManager, string $pluginsPath): int
     {
         $command = match ($packageManager) {
-            'yarn' => ['yarn', 'install', '--non-interactive'],
-            'npm'  => ['npm', 'install'],
+            'yarn'  => ['yarn', 'install', '--non-interactive'],
+            'npm'   => ['npm', 'install'],
             default => throw new RuntimeException('Unsupported plugin package manager: ' . $packageManager),
         };
 

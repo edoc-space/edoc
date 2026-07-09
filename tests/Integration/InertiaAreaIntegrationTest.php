@@ -89,6 +89,8 @@ final class InertiaAreaIntegrationTest extends IntegrationTestCase
 
         $this->assertArrayHasKey('home', $named);
         $this->assertArrayHasKey('localized.ru.home', $named);
+        $this->assertArrayHasKey('docs.search-index', $named);
+        $this->assertArrayHasKey('localized.ru.docs.search-index', $named);
         $this->assertArrayHasKey('docs.show', $named);
         $this->assertArrayHasKey('localized.ru.docs.show', $named);
         $this->assertArrayHasKey('health', $named);
@@ -97,6 +99,8 @@ final class InertiaAreaIntegrationTest extends IntegrationTestCase
         $this->assertArrayNotHasKey('login', $named);
         $this->assertSame('/', $named['home']->path);
         $this->assertSame('/ru', $named['localized.ru.home']->path);
+        $this->assertSame('/docs/search-index.json', $named['docs.search-index']->path);
+        $this->assertSame('/ru/docs/search-index.json', $named['localized.ru.docs.search-index']->path);
         $this->assertSame('/docs/{path*?}', $named['docs.show']->path);
         $this->assertSame('/ru/docs/{path*?}', $named['localized.ru.docs.show']->path);
         $this->assertSame('/health', $named['health']->path);

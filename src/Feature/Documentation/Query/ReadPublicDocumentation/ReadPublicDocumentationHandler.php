@@ -22,6 +22,14 @@ final readonly class ReadPublicDocumentationHandler
     }
 
     /**
+     * @return array{entries:list<array<string,mixed>>,versions:array<string,mixed>}
+     */
+    public function searchIndex(?string $localeCode = null, ?string $versionCode = null): array
+    {
+        return $this->documentation->searchIndex($localeCode, $versionCode);
+    }
+
+    /**
      * @return array{from:string,to:string,status:int,path:string}|null
      */
     public function redirectFor(?string $slugPath, ?string $localeCode = null): ?array

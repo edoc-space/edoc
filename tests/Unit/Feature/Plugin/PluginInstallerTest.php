@@ -42,6 +42,7 @@ final class PluginInstallerTest extends TestCase
             JSON);
 
         $installer = new PluginInstaller(new Path($root));
+
         $result = $installer->install(runInstall: false);
 
         $package = json_decode((string) file_get_contents($result->packagePath), true, 512, JSON_THROW_ON_ERROR);
@@ -66,6 +67,7 @@ final class PluginInstallerTest extends TestCase
         $root = $this->tempRoot();
 
         $installer = new PluginInstaller(new Path($root));
+
         $result = $installer->install(runInstall: false);
 
         $package = json_decode((string) file_get_contents($result->packagePath), true, 512, JSON_THROW_ON_ERROR);
@@ -89,7 +91,7 @@ final class PluginInstallerTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Invalid plugin package name');
 
-        (new PluginInstaller(new Path($root)))->install(runInstall: false);
+        new PluginInstaller(new Path($root))->install(runInstall: false);
     }
 
     private function tempRoot(): string

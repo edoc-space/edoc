@@ -241,6 +241,7 @@ final readonly class PageRepository
             'nav_label'       => $this->stringValue($frontMatter['nav_label'] ?? ''),
             'nav_position'    => $this->numberValue($frontMatter['nav_position'] ?? null),
             'nav_hidden'      => $this->boolValue($frontMatter['nav_hidden'] ?? false),
+            'header_hidden'   => $this->boolValue($frontMatter['header_hidden'] ?? false),
         ];
     }
 
@@ -362,9 +363,10 @@ final readonly class PageRepository
         $navigation = [];
         foreach ($items as $item) {
             $navigation[] = [
-                'title' => (string) ($item['title'] ?? ''),
-                'label' => (string) ($item['label'] ?? $item['title'] ?? ''),
-                'href'  => (string) ($item['href'] ?? ''),
+                'title'         => (string) ($item['title'] ?? ''),
+                'label'         => (string) ($item['label'] ?? $item['title'] ?? ''),
+                'href'          => (string) ($item['href'] ?? ''),
+                'header_hidden' => (bool) ($item['header_hidden'] ?? false),
             ];
         }
 

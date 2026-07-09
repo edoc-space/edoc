@@ -30,7 +30,7 @@ final class SiteHtmlExceptionHandler extends AbstractExceptionHandler
     {
         ['status' => $status, 'headers' => $headers] = $this->resolveStatusAndHeaders($exception);
 
-        $locale = $this->resolveLocale($request);
+        $locale                    = $this->resolveLocale($request);
         [$title, $message, $image] = $this->content($exception, $status, $locale?->code);
 
         $this->inertia->setRequest($request);

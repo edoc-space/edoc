@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Feature\Site\SiteLocaleResolver;
 use App\Http\Exception\ResourceJsonExceptionHandler;
 use App\Http\Exception\SiteHtmlExceptionHandler;
-use App\Feature\Site\SiteLocaleResolver;
 use PhpSoftBox\Application\ErrorHandler\ContentNegotiationExceptionHandler;
 use PhpSoftBox\Application\ErrorHandler\DefaultExceptionHandler;
 use PhpSoftBox\Application\ErrorHandler\ExceptionHandlerInterface;
