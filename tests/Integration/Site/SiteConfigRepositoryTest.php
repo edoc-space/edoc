@@ -34,6 +34,7 @@ final class SiteConfigRepositoryTest extends IntegrationTestCase
             pages: [
                 ['title' => 'E-Doc', 'label' => 'Home', 'href' => '/'],
                 ['title' => 'Changelog', 'label' => 'Changelog', 'href' => '/changelog'],
+                ['title' => 'Help Center', 'label' => 'Help Center', 'href' => '/help', 'header_hidden' => true],
             ],
             docs: [
                 ['title' => 'Project', 'label' => 'Project', 'href' => '/docs/project'],
@@ -45,6 +46,7 @@ final class SiteConfigRepositoryTest extends IntegrationTestCase
         $this->assertSame('/storage/edoc/static/logo.svg', $shared['site']['brand']['logo']['src'] ?? null);
         $this->assertSame(['Home', 'Changelog', 'Docs'], array_column($shared['navigation'], 'label'));
         $this->assertSame(['Site', 'Documentation'], array_column($shared['footer']['columns'], 'title'));
+        $this->assertSame(['Home', 'Changelog', 'Help Center'], array_column($shared['footer']['columns'][0]['items'], 'label'));
         $this->assertSame('© 2026 E-Doc. Documentation as code.', $shared['footer']['copyright'] ?? null);
         $this->assertSame([], array_column($shared['diagnostics'], 'code'));
     }

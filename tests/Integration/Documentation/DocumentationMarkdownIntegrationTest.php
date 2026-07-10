@@ -27,6 +27,7 @@ use function is_dir;
 use function mkdir;
 use function random_bytes;
 use function rmdir;
+use function substr_count;
 use function sys_get_temp_dir;
 use function unlink;
 
@@ -144,6 +145,110 @@ final class DocumentationMarkdownIntegrationTest extends IntegrationTestCase
             $this->assertStringContainsString('class="markdown-code__title"', $html);
             $this->assertStringContainsString('bootstrap.php', $html);
             $this->assertStringContainsString('data-language="php"', $html);
+            $this->assertSame([], $codes);
+        } finally {
+            $this->removeDirectory($root);
+        }
+    }
+
+    public function testRendererDecoratesMarkdownImageGalleries(): void
+    {
+        [$documentation, $root] = $this->documentationWith([
+            'guide/gallery.md' => <<<'MD'
+                ---
+                title: Gallery
+                slug: guide/gallery
+                ---
+
+                # Gallery
+
+                ![Single](single_hor.jpg)
+
+                ::: gallery install
+                ![Step 1](install-1_hor.jpg "First step")
+                :::
+
+                Text between screenshots.
+
+                :::gallery install
+                ![Step 2](install-2_ver.jpg)
+                ![Step 3](install-3_hor.jpg)
+                :::
+
+                ::: gallery after_install
+                ![Done](done_hor.jpg)
+                :::
+                MD,
+        ], [
+            'guide/single_hor.jpg'    => 'single',
+            'guide/install-1_hor.jpg' => 'step-1',
+            'guide/install-2_ver.jpg' => 'step-2',
+            'guide/install-3_hor.jpg' => 'step-3',
+            'guide/done_hor.jpg'      => 'done',
+        ]);
+
+        try {
+            $view  = $documentation->publicView('guide/gallery');
+            $html  = (string) ($view['document']['html'] ?? '');
+            $codes = array_column($view['diagnostics'], 'code');
+
+            $this->assertStringNotContainsString('::: gallery', $html);
+            $this->assertSame(2, substr_count($html, 'data-gallery="install"'));
+            $this->assertSame(1, substr_count($html, 'data-gallery="after_install"'));
+            $this->assertStringContainsString('src="/storage/edoc/static/guide/single_hor.jpg"', $html);
+            $this->assertStringContainsString('src="/storage/edoc/static/guide/install-1_hor.jpg"', $html);
+            $this->assertStringContainsString('title="First step"', $html);
+            $this->assertSame([], $codes);
+        } finally {
+            $this->removeDirectory($root);
+        }
+    }
+
+    public function testRendererEmbedsAllowedVideoDirectives(): void
+    {
+        [$documentation, $root] = $this->documentationWith([
+            'guide/video.md' => <<<'MD'
+                ---
+                title: Video
+                slug: guide/video
+                ---
+
+                # Video
+
+                ::: video youtube
+                https://www.youtube.com/watch?v=dQw4w9WgXcQ
+                title="YouTube overview"
+                :::
+
+                :::video rutube 0123456789abcdef0123456789abcdef
+                :::
+
+                ::: video vkvideo
+                <iframe src="https://vkvideo.ru/video_ext.php?oid=-123&id=456&hd=3" width="1280" height="720"></iframe>
+                :::
+
+                ::: video vkvideo
+                https://vkvideo.ru/video-239594766_456239018
+                title="VK direct link"
+                :::
+                MD,
+        ]);
+
+        try {
+            $view  = $documentation->publicView('guide/video');
+            $html  = (string) ($view['document']['html'] ?? '');
+            $codes = array_column($view['diagnostics'], 'code');
+
+            $this->assertStringNotContainsString('::: video', $html);
+            $this->assertStringContainsString('data-provider="youtube"', $html);
+            $this->assertStringContainsString('https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ', $html);
+            $this->assertStringContainsString('YouTube overview', $html);
+            $this->assertStringContainsString('data-provider="rutube"', $html);
+            $this->assertStringContainsString('https://rutube.ru/play/embed/0123456789abcdef0123456789abcdef', $html);
+            $this->assertStringContainsString('data-provider="vkvideo"', $html);
+            $this->assertStringContainsString('data-video-src="https://vkvideo.ru/video_ext.php?oid=-123&amp;id=456&amp;hd=3"', $html);
+            $this->assertStringContainsString('href="https://vkvideo.ru/video-239594766_456239018"', $html);
+            $this->assertStringContainsString('Для встраивания VK Video используйте src из iframe', $html);
             $this->assertSame([], $codes);
         } finally {
             $this->removeDirectory($root);

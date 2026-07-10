@@ -10,6 +10,7 @@ export type SiteNavigationItem = {
   description?: string;
   source?: string;
   footer_column?: string;
+  header_hidden?: boolean;
 };
 
 export type SiteInfo = {
@@ -74,6 +75,8 @@ export type SiteUiText = {
   searchClose?: string;
   searchStart?: string;
   searchEmpty?: string;
+  searchLoading?: string;
+  searchError?: string;
   githubAria?: string;
   versionsLabel?: string;
   version?: string;

@@ -1,6 +1,6 @@
 import React from 'react';
-import { createPortal } from 'react-dom';
 import { Drawer, Dropdown, Heading, Text } from '@phpsoftbox/react-softbox';
+import { DocsSearch, SearchEntry } from '../../../Components/DocsSearch';
 import { MarkdownDocument } from '../../../Components/MarkdownDocument';
 import { MdxDocument } from '../../../Components/MdxDocument';
 import { usePageScrollRestoration } from '../../../Components/usePageScrollRestoration';
@@ -64,24 +64,6 @@ type GeneratedIndexItem = {
   label: string;
   href: string;
   description: string;
-};
-
-type SearchEntry = {
-  id: string;
-  title: string;
-  label: string;
-  href: string;
-  kind: string;
-  type: string;
-  description: string;
-  content: string;
-  contexts?: string[];
-};
-
-type SearchResult = {
-  entry: SearchEntry;
-  snippet: string;
-  score: number;
 };
 
 type DocumentationDocument =
@@ -171,7 +153,6 @@ type Props = {
 
 const TREE_EXPANDED_STORAGE_KEY = 'edoc.docs.tree.expanded.v1';
 const SIDEBAR_COLLAPSED_STORAGE_KEY = 'edoc.docs.sidebar.collapsed.v1';
-const SEARCH_RESULT_LIMIT = 8;
 
 export default function DocumentationShow({ title, app, documentation, web, meta }: Props) {
   const current = documentation.current;
@@ -193,14 +174,8 @@ export default function DocumentationShow({ title, app, documentation, web, meta
   const [isMobileDocsNavOpen, setMobileDocsNavOpen] = React.useState(false);
   const [isMobileTocOpen, setMobileTocOpen] = React.useState(false);
   const [isSidebarCollapsed, setSidebarCollapsed] = React.useState(false);
-  const [searchQuery, setSearchQuery] = React.useState('');
-  const [isSearchOpen, setSearchOpen] = React.useState(false);
   const [activeTocId, setActiveTocId] = React.useState<string | null>(null);
   usePageScrollRestoration(`docs.${current?.href ?? documentation.not_found?.slug ?? 'index'}`);
-  const searchResults = React.useMemo(
-    () => filterSearchEntries(documentation.search ?? [], searchQuery, textLocale),
-    [documentation.search, searchQuery, textLocale],
-  );
 
   React.useEffect(() => {
     setExpandedNodes(readStoredExpandedNodes(treeStorageKey));
@@ -306,15 +281,6 @@ export default function DocumentationShow({ title, app, documentation, web, meta
     });
   }, []);
 
-  const handleCloseSearch = React.useCallback(() => {
-    setSearchOpen(false);
-    setSearchQuery('');
-  }, []);
-
-  const handleOpenSearch = React.useCallback(() => {
-    setSearchOpen(true);
-  }, []);
-
   const handleTocClick = React.useCallback((event: React.MouseEvent<HTMLAnchorElement>, item: TocItem) => {
     if (typeof window === 'undefined') {
       return;
@@ -408,14 +374,9 @@ export default function DocumentationShow({ title, app, documentation, web, meta
               <DocsVersionDropdown versions={documentation.versions} ui={ui} />
               {documentation.search.length > 0 ? (
                 <DocsSearch
-                  query={searchQuery}
-                  results={searchResults}
-                  isOpen={isSearchOpen}
+                  provider={{ type: 'memory', entries: documentation.search ?? [] }}
                   ui={ui}
                   textLocale={textLocale}
-                  onOpen={handleOpenSearch}
-                  onQueryChange={setSearchQuery}
-                  onClose={handleCloseSearch}
                 />
               ) : null}
             </>
@@ -454,6 +415,8 @@ export default function DocumentationShow({ title, app, documentation, web, meta
                 <MdxDocument
                   className="docs-document markdown-body"
                   module={documentation.document.module}
+                  locale={web?.locale}
+                  ui={ui}
                 />
               ) : (
                 <MarkdownDocument
@@ -795,208 +758,6 @@ function versionStatusLabel(item: DocumentationVersionItem, ui: SiteUiText): str
   return ui.supportedVersion ?? 'Поддерживается';
 }
 
-function DocsSearch({
-  query,
-  results,
-  isOpen,
-  ui,
-  textLocale,
-  onOpen,
-  onQueryChange,
-  onClose,
-}: {
-  query: string;
-  results: SearchResult[];
-  isOpen: boolean;
-  ui: SiteUiText;
-  textLocale: string;
-  onOpen: () => void;
-  onQueryChange: (query: string) => void;
-  onClose: () => void;
-}) {
-  const inputRef = React.useRef<HTMLInputElement | null>(null);
-  const [pressedShortcutKeys, setPressedShortcutKeys] = React.useState({ modifier: false, key: false });
-  const isQueryActive = query.trim() !== '';
-  const modifierKey = platformModifierKey();
-
-  React.useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (isModifierKey(event)) {
-        setPressedShortcutKeys((current) => ({ ...current, modifier: true }));
-        return;
-      }
-
-      if (event.key.toLocaleLowerCase() === 'k') {
-        setPressedShortcutKeys((current) => ({ ...current, key: true }));
-      }
-
-      if ((event.metaKey || event.ctrlKey) && !event.shiftKey && !event.altKey && event.key.toLocaleLowerCase() === 'k') {
-        event.preventDefault();
-        onOpen();
-      }
-    };
-
-    const handleKeyUp = (event: KeyboardEvent) => {
-      if (isModifierKey(event)) {
-        setPressedShortcutKeys((current) => ({ ...current, modifier: false }));
-      }
-
-      if (event.key.toLocaleLowerCase() === 'k') {
-        setPressedShortcutKeys((current) => ({ ...current, key: false }));
-      }
-    };
-
-    const handleBlur = () => {
-      setPressedShortcutKeys({ modifier: false, key: false });
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
-    window.addEventListener('blur', handleBlur);
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
-      window.removeEventListener('blur', handleBlur);
-    };
-  }, [onOpen]);
-
-  React.useEffect(() => {
-    if (!isOpen) {
-      return undefined;
-    }
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape') {
-        return;
-      }
-
-      event.preventDefault();
-      onClose();
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [isOpen, onClose]);
-
-  React.useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
-    const frameId = window.requestAnimationFrame(() => {
-      inputRef.current?.focus({ preventScroll: true });
-    });
-
-    return () => window.cancelAnimationFrame(frameId);
-  }, [isOpen]);
-
-  return (
-    <div className="docs-search" data-open={isOpen}>
-      <button
-        type="button"
-        className="docs-search-trigger"
-        aria-label={ui.searchOpenAria ?? ui.searchAria ?? 'Поиск по документации'}
-        onClick={onOpen}
-      >
-        <span className="docs-search-icon" aria-hidden="true" />
-        <span className="docs-search-trigger-label">{ui.searchPlaceholder ?? 'Поиск'}</span>
-        <span className="docs-search-shortcut" aria-hidden="true">
-          <kbd data-pressed={pressedShortcutKeys.modifier}>{modifierKey}</kbd>
-          <kbd data-pressed={pressedShortcutKeys.key}>K</kbd>
-        </span>
-      </button>
-
-      {isOpen && typeof document !== 'undefined' ? createPortal(
-        <div className="docs-search-overlay" role="presentation">
-          <button type="button" className="docs-search-backdrop" aria-label={ui.searchClose ?? 'Закрыть поиск'} onClick={onClose} />
-          <div className="docs-search-dialog" role="dialog" aria-modal="true" aria-label={ui.searchAria ?? 'Поиск по документации'}>
-            <div className="docs-search-field">
-              <span className="docs-search-icon" aria-hidden="true" />
-              <input
-                ref={inputRef}
-                type="search"
-                className="docs-search-input"
-                value={query}
-                placeholder={ui.searchPlaceholder ?? 'Поиск'}
-                aria-label={ui.searchAria ?? 'Поиск по документации'}
-                onChange={(event) => onQueryChange(event.currentTarget.value)}
-                onKeyDown={(event) => {
-                  if (event.key === 'Escape') {
-                    onClose();
-                  }
-                }}
-              />
-              <button type="button" className="docs-search-close" aria-label={ui.searchClose ?? 'Закрыть поиск'} onClick={onClose}>
-                <span aria-hidden="true" />
-              </button>
-            </div>
-
-            <div className="docs-search-results" role="listbox">
-              {isQueryActive && results.length > 0 ? (
-                results.map((result) => (
-                  <a key={result.entry.id} href={result.entry.href} className="docs-search-result" onClick={onClose}>
-                    <span className="docs-search-result-title">
-                      <HighlightedText text={result.entry.title} query={query} textLocale={textLocale} />
-                    </span>
-                    {result.snippet ? (
-                      <span className="docs-search-result-description">
-                        <HighlightedText text={result.snippet} query={query} textLocale={textLocale} />
-                      </span>
-                    ) : null}
-                    <span className="docs-search-result-type">{result.entry.kind === 'category' ? (ui.category ?? 'Раздел') : (ui.document ?? 'Документ')}</span>
-                  </a>
-                ))
-              ) : (
-                <span className="docs-search-empty">{isQueryActive ? (ui.searchEmpty ?? 'Ничего не найдено') : (ui.searchStart ?? 'Начните вводить запрос для поиска по документации.')}</span>
-              )}
-            </div>
-          </div>
-        </div>,
-        document.body,
-      ) : null}
-    </div>
-  );
-}
-
-function isModifierKey(event: KeyboardEvent): boolean {
-  return event.key === 'Meta' || event.key === 'Control';
-}
-
-function platformModifierKey(): string {
-  if (typeof window === 'undefined') {
-    return 'Ctrl';
-  }
-
-  return /Mac|iPhone|iPad|iPod/i.test(window.navigator.platform) ? '⌘' : 'Ctrl';
-}
-
-function HighlightedText({ text, query, textLocale = 'ru' }: { text: string; query: string; textLocale?: string }) {
-  const normalizedQuery = query.trim();
-  if (normalizedQuery === '') {
-    return <>{text}</>;
-  }
-
-  const index = text.toLocaleLowerCase(textLocale).indexOf(normalizedQuery.toLocaleLowerCase(textLocale));
-  if (index < 0) {
-    return <>{text}</>;
-  }
-
-  return (
-    <>
-      {text.slice(0, index)}
-      <mark>{text.slice(index, index + normalizedQuery.length)}</mark>
-      {text.slice(index + normalizedQuery.length)}
-    </>
-  );
-}
-
 function readStoredExpandedNodes(storageKey: string): Record<string, boolean> {
   if (typeof window === 'undefined') {
     return {};
@@ -1195,88 +956,4 @@ function hasActiveChild(node: DocsNode, currentHref: string | null): boolean {
   }
 
   return (node.children ?? []).some((child) => hasActiveChild(child, currentHref));
-}
-
-function filterSearchEntries(entries: SearchEntry[], query: string, textLocale: string): SearchResult[] {
-  const normalizedQuery = normalizeSearchText(query, textLocale);
-  if (normalizedQuery === '') {
-    return [];
-  }
-
-  return entries
-    .map((entry) => {
-      const title = normalizeSearchText(entry.title, textLocale);
-      const description = normalizeSearchText(entry.description, textLocale);
-      const content = normalizeSearchText(entry.content, textLocale);
-      const contextIndex = (entry.contexts ?? []).findIndex((context) => normalizeSearchText(context, textLocale).includes(normalizedQuery));
-      const haystack = `${title} ${description} ${content}`;
-
-      if (!haystack.includes(normalizedQuery) && contextIndex < 0) {
-        return null;
-      }
-
-      const score = title.includes(normalizedQuery)
-        ? 0
-        : description.includes(normalizedQuery)
-          ? 1
-          : contextIndex >= 0
-            ? 2
-            : 3;
-
-      return {
-        entry,
-        score,
-        snippet: searchSnippet(entry, normalizedQuery, score, textLocale),
-      };
-    })
-    .filter((item): item is SearchResult => item !== null)
-    .sort((a, b) => a.score - b.score || a.entry.title.localeCompare(b.entry.title, textLocale))
-    .slice(0, SEARCH_RESULT_LIMIT)
-    .map((item) => item);
-}
-
-function normalizeSearchText(value: string, textLocale: string): string {
-  return value.trim().toLocaleLowerCase(textLocale).replace(/\s+/g, ' ');
-}
-
-function searchSnippet(entry: SearchEntry, normalizedQuery: string, score: number, textLocale: string): string {
-  if (score === 0) {
-    return entry.description || contextSnippet(entry.contexts ?? [], normalizedQuery, textLocale) || trimSnippet(entry.content, normalizedQuery, textLocale);
-  }
-
-  if (score === 1) {
-    return trimSnippet(entry.description, normalizedQuery, textLocale);
-  }
-
-  return contextSnippet(entry.contexts ?? [], normalizedQuery, textLocale) || trimSnippet(entry.content, normalizedQuery, textLocale);
-}
-
-function contextSnippet(contexts: string[], normalizedQuery: string, textLocale: string): string {
-  for (const context of contexts) {
-    if (normalizeSearchText(context, textLocale).includes(normalizedQuery)) {
-      return trimSnippet(context, normalizedQuery, textLocale);
-    }
-  }
-
-  return '';
-}
-
-function trimSnippet(value: string, normalizedQuery: string, textLocale: string): string {
-  const text = value.replace(/\s+/g, ' ').trim();
-  if (text === '') {
-    return '';
-  }
-
-  const normalizedText = text.toLocaleLowerCase(textLocale);
-  const index = normalizedText.indexOf(normalizedQuery);
-  if (index < 0) {
-    return text.slice(0, 160);
-  }
-
-  const start = Math.max(0, index - 70);
-  const end = Math.min(text.length, index + normalizedQuery.length + 90);
-  const prefix = start > 0 ? '...' : '';
-  const suffix = end < text.length ? '...' : '';
-
-  return `${prefix}${text.slice(start, end).trim()}${suffix}`;
 }

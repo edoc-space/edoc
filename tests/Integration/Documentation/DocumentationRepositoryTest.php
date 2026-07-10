@@ -142,6 +142,32 @@ final class DocumentationRepositoryTest extends IntegrationTestCase
         }
     }
 
+    public function testSearchIndexReturnsPreparedEntries(): void
+    {
+        [$documentation, $root] = $this->documentationWith([
+            'guide/receiving.md' => <<<'MD'
+                ---
+                title: Приемка
+                description: Как принять товар на склад
+                ---
+
+                # Приемка
+
+                Создание приемки и печать этикеток.
+                MD,
+        ]);
+
+        try {
+            $index = $documentation->searchIndex();
+
+            $this->assertSame(['Приемка'], array_column($index['entries'], 'title'));
+            $this->assertSame('/docs/guide/receiving', $index['entries'][0]['href'] ?? null);
+            $this->assertStringContainsString('печать этикеток', $index['entries'][0]['content'] ?? '');
+        } finally {
+            $this->removeDirectory($root);
+        }
+    }
+
     /**
      * @param array<string,string> $documents
      * @return array{0:DocumentationRepository,1:string}

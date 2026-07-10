@@ -13,12 +13,14 @@ final readonly class MarkdownContentRenderer implements ContentRendererInterface
 {
     public function __construct(
         private MarkdownRenderer $renderer,
+        private MarkdownMediaDirectiveProcessor $mediaDirectives = new MarkdownMediaDirectiveProcessor(),
     ) {
     }
 
     public function render(string $source, ContentRenderOptions $options): RenderedContent
     {
-        $document = $this->renderer->render($source, new MarkdownRenderOptions(
+        $directives = $this->mediaDirectives->prepare($source);
+        $document   = $this->renderer->render($directives['source'], new MarkdownRenderOptions(
             htmlPolicy: $options->htmlPolicy,
             tocMinHeadingLevel: $options->tocMinHeadingLevel,
             tocMaxHeadingLevel: $options->tocMaxHeadingLevel,
@@ -30,7 +32,7 @@ final readonly class MarkdownContentRenderer implements ContentRendererInterface
         ));
 
         return new RenderedContent(
-            html: $document->html(),
+            html: $this->mediaDirectives->apply($document->html(), $directives),
             frontMatter: $document->frontMatter(),
             toc: $this->tocToArray($document),
             diagnostics: $this->diagnosticsToArray($document, $options->path),

@@ -1,7 +1,10 @@
 import React from 'react';
+import type { SiteLocaleItem, SiteUiText } from '../../Layouts/SiteLayout';
 
 export type MdxLayoutContextValue = {
   heroBefore?: React.ReactNode;
+  locale?: SiteLocaleItem;
+  ui?: SiteUiText;
 };
 
 export const MdxLayoutContext = React.createContext<MdxLayoutContextValue>({});

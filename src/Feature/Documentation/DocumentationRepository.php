@@ -26,6 +26,19 @@ final readonly class DocumentationRepository
     }
 
     /**
+     * @return array{entries:list<array<string,mixed>>,versions:array<string,mixed>}
+     */
+    public function searchIndex(?string $localeCode = null, ?string $versionCode = null): array
+    {
+        $index = $this->indexBuilder->build($localeCode, $versionCode);
+
+        return [
+            'entries'  => $index['search_entries'],
+            'versions' => $index['versions'],
+        ];
+    }
+
+    /**
      * @return array{
      *     sidebars:list<array<string,string>>,
      *     active_sidebar:array<string,string>|null,

@@ -7,12 +7,18 @@ type MdxHeadingProps = React.HTMLAttributes<HTMLHeadingElement> & {
   level: MdxHeadingLevel;
 };
 
-export function MdxImage({ src = '', alt = '', ...props }: React.ImgHTMLAttributes<HTMLImageElement>) {
+export function MdxImage({ src = '', alt = '', title, ...props }: React.ImgHTMLAttributes<HTMLImageElement>) {
   const resolvedSrc = typeof src === 'string' && src !== '' && !src.startsWith('/') && !/^[a-z][a-z0-9+.-]*:/i.test(src)
     ? `/storage/edoc/static/${src}`
     : src;
+  const caption = typeof title === 'string' && title.trim() !== '' ? title : alt;
 
-  return <img {...props} src={resolvedSrc} alt={alt} />;
+  return (
+    <span className="docs-image">
+      <img {...props} src={resolvedSrc} alt={alt} title={title} />
+      {caption ? <span className="docs-image__caption">{caption}</span> : null}
+    </span>
+  );
 }
 
 export function MdxAnchor({ href = '', children, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) {

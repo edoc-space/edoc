@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration;
 
-use App\Http\Exception\SiteHtmlExceptionHandler;
 use App\Feature\Site\SiteLocaleResolver;
+use App\Http\Exception\SiteHtmlExceptionHandler;
 use App\Tests\Support\IntegrationTestCase;
 use PhpSoftBox\Application\Exception\NotFoundHttpException;
 use PhpSoftBox\Http\Message\ServerRequest;
