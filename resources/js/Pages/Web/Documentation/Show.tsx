@@ -77,7 +77,10 @@ type DocumentationDocument =
     }
   | {
       kind: 'generated-index';
+      format?: 'markdown' | 'mdx' | null;
       html: string;
+      module?: string;
+      has_intro?: boolean;
       items: GeneratedIndexItem[];
       toc: TocItem[];
       diagnostics: Diagnostic[];
@@ -170,6 +173,7 @@ export default function DocumentationShow({ title, app, documentation, web, meta
   const showDiagnostics = app?.env !== 'prod' && documentation.diagnostics.length > 0;
   const hasDocumentationBody = documentation.not_found === null && current !== null && documentation.document !== null;
   const showOnPageToc = hasDocumentationBody && documentation.toc.length > 0;
+  const generatedIndexHasIntro = documentation.document?.kind === 'generated-index' && documentation.document.has_intro === true;
   const [expandedNodes, setExpandedNodes] = React.useState<Record<string, boolean>>({});
   const [isMobileDocsNavOpen, setMobileDocsNavOpen] = React.useState(false);
   const [isMobileTocOpen, setMobileTocOpen] = React.useState(false);
@@ -399,14 +403,18 @@ export default function DocumentationShow({ title, app, documentation, web, meta
             <EmptyDocumentation ui={ui} />
           ) : (
             <>
-              <header className="docs-content-header">
-                <Heading level={1}>{title}</Heading>
-                {current.description ? <Text as="p" className="docs-content-description">{current.description}</Text> : null}
+              <header className="docs-content-header" data-intro-only={generatedIndexHasIntro}>
+                {!generatedIndexHasIntro ? (
+                  <>
+                    <Heading level={1}>{title}</Heading>
+                    {current.description ? <Text as="p" className="docs-content-description">{current.description}</Text> : null}
+                  </>
+                ) : null}
                 <Breadcrumbs items={documentation.breadcrumbs} ui={ui} />
               </header>
 
               {documentation.document.kind === 'generated-index' ? (
-                <SectionOverview items={documentation.document.items} ui={ui} />
+                <GeneratedIndexDocument document={documentation.document} locale={web?.locale} ui={ui} />
               ) : documentation.document.kind === 'versions-index' ? (
                 <VersionsOverview items={documentation.document.items} ui={ui} />
               ) : documentation.document.kind === 'version-archive' ? (
@@ -636,6 +644,38 @@ function SectionOverview({ items, ui }: { items: GeneratedIndexItem[]; ui: SiteU
         </a>
       ))}
     </nav>
+  );
+}
+
+function GeneratedIndexDocument({
+  document,
+  locale,
+  ui,
+}: {
+  document: Extract<DocumentationDocument, { kind: 'generated-index' }>;
+  locale?: SiteLocaleItem;
+  ui: SiteUiText;
+}) {
+  return (
+    <div className="docs-generated-index">
+      {document.has_intro === true ? (
+        document.format === 'mdx' && document.module ? (
+          <MdxDocument
+            className="docs-document markdown-body"
+            module={document.module}
+            locale={locale}
+            ui={ui}
+          />
+        ) : (
+          <MarkdownDocument
+            className="docs-document markdown-body"
+            html={document.html}
+          />
+        )
+      ) : null}
+
+      <SectionOverview items={document.items} ui={ui} />
+    </div>
   );
 }
 

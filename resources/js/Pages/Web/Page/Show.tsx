@@ -50,6 +50,7 @@ type Props = {
       label: string;
       href: string;
       layout: string;
+      container?: 'fluid' | 'constrained' | 'wide' | 'narrow';
       description?: string;
     };
     document: {
@@ -72,7 +73,7 @@ export default function PageShow({ app, page, web, meta }: Props) {
   usePageScrollRestoration(`page.${page.current.href}`);
 
   return (
-    <div className="page-shell" data-layout={page.current.layout}>
+    <div className="page-shell" data-layout={page.current.layout} data-container={page.current.container ?? 'fluid'}>
       <SiteHeader
         className="page-header"
         navClassName="page-header-nav"
