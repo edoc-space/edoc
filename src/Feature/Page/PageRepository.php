@@ -236,6 +236,7 @@ final readonly class PageRepository
             'module_path'     => $this->modulePath($locale, $path),
             'format'          => $this->contentFormat($path),
             'layout'          => $this->stringValue($frontMatter['layout'] ?? '') ?: 'page',
+            'container'       => $this->pageContainer($frontMatter['container'] ?? null),
             'description'     => $this->stringValue($frontMatter['description'] ?? ''),
             'translation_key' => $this->stringValue($frontMatter['translation_key'] ?? ''),
             'nav_label'       => $this->stringValue($frontMatter['nav_label'] ?? ''),
@@ -452,6 +453,15 @@ final readonly class PageRepository
     private function contentFormat(string $path): string
     {
         return str_ends_with($path, '.mdx') ? 'mdx' : 'markdown';
+    }
+
+    private function pageContainer(mixed $value): string
+    {
+        $container = $this->stringValue($value);
+
+        return in_array($container, ['fluid', 'constrained', 'wide', 'narrow'], true)
+            ? $container
+            : 'fluid';
     }
 
     private function stripContentExtension(string $path): string

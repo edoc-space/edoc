@@ -260,6 +260,8 @@ final class DocumentationIndexBuilder
             $categories[$dir] = $category;
         }
 
+        $generatedIndexIntroPaths = [];
+
         foreach ($categories as $dir => $category) {
             $indexPath = $this->indexDocumentPath($dir, $documents);
             $link      = $metadata[$dir]['link'] ?? null;
@@ -267,6 +269,14 @@ final class DocumentationIndexBuilder
             if (is_array($link) && ($link['type'] ?? null) === 'generated-index') {
                 $categories[$dir]['href'] = $this->docsHref($dir, $locale, $selected);
                 $categories[$dir]['slug'] = $dir;
+
+                $introPath = $this->generatedIndexIntroPath($dir, $metadata[$dir] ?? [], $documents, $diagnostics);
+                if ($introPath !== null && isset($documents[$introPath])) {
+                    $categories[$dir]['intro']            = $documents[$introPath];
+                    $categories[$dir]                     = $this->withIntroSearchContexts($categories[$dir], $documents[$introPath]);
+                    $generatedIndexIntroPaths[$introPath] = true;
+                }
+
                 continue;
             }
 
@@ -297,6 +307,10 @@ final class DocumentationIndexBuilder
         }
 
         foreach ($documents as $path => $document) {
+            if (isset($generatedIndexIntroPaths[$path])) {
+                continue;
+            }
+
             if ($this->isIndexFile($path) && $this->directory($path) !== '') {
                 continue;
             }
@@ -314,7 +328,11 @@ final class DocumentationIndexBuilder
         $categories = $this->indexCategoriesByPath($tree);
 
         $pages = [];
-        foreach ($documents as $document) {
+        foreach ($documents as $path => $document) {
+            if (isset($generatedIndexIntroPaths[$path])) {
+                continue;
+            }
+
             $this->registerPage($pages, $document, $diagnostics);
         }
 
@@ -330,25 +348,29 @@ final class DocumentationIndexBuilder
             $this->registerPage($pages, $category, $diagnostics);
         }
 
-        $flatPages = $this->flatPages($tree, $pages);
-        $sidebars  = $this->sidebars($tree);
-        $redirects = $this->redirects($metadata, $documents, $pages, $diagnostics, $locale);
-        $search    = $this->searchEntries($flatPages);
+        $flatPages      = $this->flatPages($tree, $pages);
+        $sidebarIndex   = $this->sidebars($tree, $diagnostics);
+        $sidebars       = $sidebarIndex['items'];
+        $defaultSidebar = $sidebarIndex['default'];
+        $redirects      = $this->redirects($metadata, $documents, $pages, $diagnostics, $locale);
+        $search         = $this->searchEntries($flatPages);
 
         return [
-            'sidebars'            => $sidebars,
-            'tree'                => $tree,
-            'pages'               => $pages,
-            'categories'          => $categories,
-            'documents_by_path'   => $documents,
-            'redirects'           => $redirects,
-            'search_entries'      => $search,
-            'flat_pages'          => $flatPages,
-            'first_sidebar_slug'  => $sidebars[0]['slug'] ?? null,
-            'first_slug'          => $flatPages[0]['slug'] ?? null,
-            'versions'            => $versions,
-            'content_fingerprint' => $fingerprint,
-            'diagnostics'         => $diagnostics,
+            'sidebars'             => $sidebars,
+            'tree'                 => $tree,
+            'pages'                => $pages,
+            'categories'           => $categories,
+            'documents_by_path'    => $documents,
+            'redirects'            => $redirects,
+            'search_entries'       => $search,
+            'flat_pages'           => $flatPages,
+            'first_sidebar_slug'   => $defaultSidebar['slug'] ?? $sidebars[0]['slug'] ?? null,
+            'default_sidebar_slug' => $defaultSidebar['slug'] ?? null,
+            'sidebars_explicit'    => $sidebarIndex['explicit'],
+            'first_slug'           => $flatPages[0]['slug'] ?? null,
+            'versions'             => $versions,
+            'content_fingerprint'  => $fingerprint,
+            'diagnostics'          => $diagnostics,
         ];
     }
 
@@ -537,9 +559,11 @@ final class DocumentationIndexBuilder
             'locale'          => $locale->code,
             'version'         => $this->versionCode($version),
             'sidebar'         => $this->boolValue($metadata['sidebar'] ?? false),
+            'default_sidebar' => $this->boolValue($metadata['default_sidebar'] ?? $metadata['default'] ?? false),
             'collapsed'       => $collapsed,
             'expanded'        => !$collapsed,
             'link_type'       => $linkType,
+            'intro'           => null,
             'children'        => [],
         ];
     }
@@ -650,10 +674,111 @@ final class DocumentationIndexBuilder
     }
 
     /**
-     * @param list<array<string,mixed>> $tree
-     * @return list<array<string,string>>
+     * @param array<string,mixed> $metadata
+     * @param array<string,array<string,mixed>> $documents
+     * @param list<array<string,mixed>> $diagnostics
      */
-    private function sidebars(array $tree): array
+    private function generatedIndexIntroPath(string $dir, array $metadata, array $documents, array &$diagnostics): ?string
+    {
+        $content = $metadata['content'] ?? null;
+        if (is_array($content) && array_key_exists('source', $content)) {
+            $source = $this->stringValue($content['source'] ?? '');
+            $path   = $this->categoryContentSourcePath($source, $dir);
+            if ($path === null || !$this->isContentFile($path)) {
+                $diagnostics[] = [
+                    'level'   => 'warning',
+                    'code'    => 'category.content_invalid',
+                    'message' => 'Generated index content.source must point to a Markdown or MDX file inside the category.',
+                    'path'    => $this->categoryMetadataPath($dir),
+                    'line'    => null,
+                ];
+
+                return null;
+            }
+
+            if (!isset($documents[$path])) {
+                $diagnostics[] = [
+                    'level'   => 'warning',
+                    'code'    => 'category.content_missing',
+                    'message' => 'Generated index content source was not found: ' . $path,
+                    'path'    => $this->categoryMetadataPath($dir),
+                    'line'    => null,
+                ];
+
+                return null;
+            }
+
+            return $path;
+        }
+
+        return $this->indexDocumentPath($dir, $documents);
+    }
+
+    private function categoryContentSourcePath(string $source, string $dir): ?string
+    {
+        $source = str_replace('\\', '/', trim($source));
+        if ($source === '' || preg_match('~^[a-z][a-z0-9+.-]*:~i', $source) === 1 || str_starts_with($source, '//')) {
+            return null;
+        }
+
+        if (str_starts_with($source, '/')) {
+            return null;
+        }
+
+        $candidate = trim(($dir === '' ? '' : $dir . '/') . $source, '/');
+        $candidate = preg_replace('~/+~', '/', $candidate) ?? $candidate;
+        $segments  = [];
+
+        foreach (explode('/', $candidate) as $segment) {
+            if ($segment === '' || $segment === '.') {
+                continue;
+            }
+
+            if ($segment === '..') {
+                return null;
+            }
+
+            $segments[] = $segment;
+        }
+
+        $path = implode('/', $segments);
+        if ($path === '' || str_contains($path, "\0")) {
+            return null;
+        }
+
+        if ($dir !== '' && $path !== $dir && !str_starts_with($path, $dir . '/')) {
+            return null;
+        }
+
+        return $path;
+    }
+
+    /**
+     * @param array<string,mixed> $category
+     * @param array<string,mixed> $intro
+     * @return array<string,mixed>
+     */
+    private function withIntroSearchContexts(array $category, array $intro): array
+    {
+        $contexts = $this->stringList($category['search_contexts'] ?? []);
+        foreach ($this->stringList($intro['search_contexts'] ?? []) as $context) {
+            if (!in_array($context, $contexts, true)) {
+                $contexts[] = $context;
+            }
+        }
+
+        $category['search_contexts'] = $contexts;
+        $category['search_text']     = implode(' ', $contexts);
+
+        return $category;
+    }
+
+    /**
+     * @param list<array<string,mixed>> $tree
+     * @param list<array<string,mixed>> $diagnostics
+     * @return array{items:list<array<string,mixed>>,explicit:bool,default:array<string,mixed>|null}
+     */
+    private function sidebars(array $tree, array &$diagnostics): array
     {
         $candidates = [];
         foreach ($tree as $node) {
@@ -674,16 +799,39 @@ final class DocumentationIndexBuilder
         $nodes = $explicit !== [] ? $explicit : $candidates;
 
         $sidebars = [];
+        $default  = null;
         foreach ($nodes as $node) {
-            $sidebars[] = $this->sidebarItem($node);
+            $item       = $this->sidebarItem($node);
+            $sidebars[] = $item;
+
+            if (($item['default'] ?? false) !== true) {
+                continue;
+            }
+
+            if ($default === null) {
+                $default = $item;
+                continue;
+            }
+
+            $diagnostics[] = [
+                'level'   => 'warning',
+                'code'    => 'sidebar.default_duplicate',
+                'message' => 'Multiple documentation sidebars are marked as default. The first one is used.',
+                'path'    => $this->categoryMetadataPath((string) ($node['path'] ?? '')),
+                'line'    => null,
+            ];
         }
 
-        return $sidebars;
+        return [
+            'items'    => $sidebars,
+            'explicit' => $explicit !== [],
+            'default'  => $default,
+        ];
     }
 
     /**
      * @param array<string,mixed> $node
-     * @return array{id:string,title:string,label:string,href:string,slug:string,path:string,description:string}
+     * @return array{id:string,title:string,label:string,href:string,slug:string,path:string,description:string,default:bool}
      */
     private function sidebarItem(array $node): array
     {
@@ -695,6 +843,7 @@ final class DocumentationIndexBuilder
             'slug'        => (string) ($node['slug'] ?? ''),
             'path'        => (string) ($node['path'] ?? ''),
             'description' => (string) ($node['description'] ?? ''),
+            'default'     => ($node['default_sidebar'] ?? false) === true,
         ];
     }
 
@@ -1783,18 +1932,20 @@ final class DocumentationIndexBuilder
     private function emptyIndex(): array
     {
         return [
-            'sidebars'            => [],
-            'tree'                => [],
-            'pages'               => [],
-            'categories'          => [],
-            'documents_by_path'   => [],
-            'redirects'           => [],
-            'search_entries'      => [],
-            'flat_pages'          => [],
-            'first_sidebar_slug'  => null,
-            'first_slug'          => null,
-            'content_fingerprint' => '',
-            'versions'            => [
+            'sidebars'             => [],
+            'tree'                 => [],
+            'pages'                => [],
+            'categories'           => [],
+            'documents_by_path'    => [],
+            'redirects'            => [],
+            'search_entries'       => [],
+            'flat_pages'           => [],
+            'first_sidebar_slug'   => null,
+            'default_sidebar_slug' => null,
+            'sidebars_explicit'    => false,
+            'first_slug'           => null,
+            'content_fingerprint'  => '',
+            'versions'             => [
                 'enabled'  => false,
                 'current'  => '',
                 'selected' => null,

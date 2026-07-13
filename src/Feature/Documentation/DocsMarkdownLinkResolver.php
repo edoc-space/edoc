@@ -78,7 +78,11 @@ final readonly class DocsMarkdownLinkResolver implements MarkdownLinkResolverInt
         }
 
         if (!$this->isDocumentPath($resolvedPath)) {
-            return MarkdownResolvedLink::resolved($this->withFragment($target, $fragment));
+            $slug = trim($resolvedPath, '/');
+
+            return isset($this->pagesBySlug[$slug])
+                ? MarkdownResolvedLink::resolved($this->withFragment($this->docsHref($slug), $fragment))
+                : MarkdownResolvedLink::resolved($this->withFragment($target, $fragment));
         }
 
         if (!isset($this->documentsByPath[$resolvedPath])) {

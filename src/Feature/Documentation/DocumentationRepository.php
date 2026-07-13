@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Feature\Documentation;
 
+use function count;
 use function is_array;
 use function preg_match;
 use function str_starts_with;
@@ -84,10 +85,12 @@ final readonly class DocumentationRepository
         }
 
         if ($current === null) {
+            $activeSidebar = $this->defaultSidebar($index['sidebars']);
+
             return [
                 'sidebars'       => $index['sidebars'],
-                'active_sidebar' => $index['sidebars'][0] ?? null,
-                'tree'           => $index['tree'],
+                'active_sidebar' => $activeSidebar,
+                'tree'           => $this->activeTree($index, $activeSidebar),
                 'current'        => null,
                 'document'       => null,
                 'breadcrumbs'    => [],
@@ -102,8 +105,8 @@ final readonly class DocumentationRepository
         }
 
         $activeSidebar = $this->navigation->activeSidebar($current, $index['sidebars']);
-        $activeTree    = $index['tree'];
-        $activePages   = $index['flat_pages'];
+        $activeTree    = $this->activeTree($index, $activeSidebar);
+        $activePages   = $this->activePages($index, $activeTree);
 
         $document   = $this->renderer->render($current, $index);
         $navigation = $this->navigation->prevNext($activePages, $currentSlug);
@@ -135,18 +138,18 @@ final readonly class DocumentationRepository
      */
     public function redirectFor(?string $slugPath, ?string $localeCode = null): ?array
     {
-        if ($slugPath === null) {
-            return null;
-        }
-
         $request = $this->versionedRequest($slugPath);
-        if ($request['versions_index'] || $request['version'] !== null) {
+        if ($request['versions_index']) {
             return null;
         }
 
-        $index = $this->indexBuilder->build($localeCode);
+        $index = $this->indexBuilder->build($localeCode, $request['version']);
         $slug  = $this->indexBuilder->normalizeSlug($request['slug']);
         if ($slug === '') {
+            return $this->docsRootRedirect($index);
+        }
+
+        if ($request['version'] !== null) {
             return null;
         }
 
@@ -186,7 +189,7 @@ final readonly class DocumentationRepository
         $slug  = $this->indexBuilder->normalizeSlug($slugPath ?? '');
 
         $activeSidebar = $this->activeSidebarForSlug($slug, $index['sidebars']);
-        $activeTree    = $index['tree'];
+        $activeTree    = $this->activeTree($index, $activeSidebar);
 
         return [
             'sidebars'       => $index['sidebars'],
@@ -354,6 +357,78 @@ final readonly class DocumentationRepository
             }
         }
 
+        return $this->defaultSidebar($sidebars);
+    }
+
+    /**
+     * @param array<string,mixed> $index
+     * @return array{from:string,to:string,status:int,path:string}|null
+     */
+    private function docsRootRedirect(array $index): ?array
+    {
+        $sidebars = is_array($index['sidebars'] ?? null) ? $index['sidebars'] : [];
+        if (count($sidebars) <= 1) {
+            return null;
+        }
+
+        $target = $this->defaultSidebar($sidebars);
+        $href   = (string) ($target['href'] ?? '');
+        if ($href === '') {
+            return null;
+        }
+
+        return [
+            'from'   => (string) ($index['versions']['selected']['href'] ?? '/docs'),
+            'to'     => $href,
+            'status' => 302,
+            'path'   => 'docs',
+        ];
+    }
+
+    /**
+     * @param list<array<string,mixed>> $sidebars
+     * @return array<string,mixed>|null
+     */
+    private function defaultSidebar(array $sidebars): ?array
+    {
+        foreach ($sidebars as $sidebar) {
+            if (($sidebar['default'] ?? false) === true) {
+                return $sidebar;
+            }
+        }
+
         return $sidebars[0] ?? null;
+    }
+
+    /**
+     * @param array<string,mixed> $index
+     * @param array<string,mixed>|null $activeSidebar
+     * @return list<array<string,mixed>>
+     */
+    private function activeTree(array $index, ?array $activeSidebar): array
+    {
+        $tree = is_array($index['tree'] ?? null) ? $index['tree'] : [];
+        if (($index['sidebars_explicit'] ?? false) !== true || $activeSidebar === null) {
+            return $tree;
+        }
+
+        return $this->navigation->sidebarTree($tree, $activeSidebar);
+    }
+
+    /**
+     * @param array<string,mixed> $index
+     * @param list<array<string,mixed>> $activeTree
+     * @return list<array<string,mixed>>
+     */
+    private function activePages(array $index, array $activeTree): array
+    {
+        if (($index['sidebars_explicit'] ?? false) !== true) {
+            return is_array($index['flat_pages'] ?? null) ? $index['flat_pages'] : [];
+        }
+
+        return $this->navigation->flatPages(
+            $activeTree,
+            is_array($index['pages'] ?? null) ? $index['pages'] : [],
+        );
     }
 }

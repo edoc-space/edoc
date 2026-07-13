@@ -55,7 +55,7 @@ final readonly class DocumentationRenderer
     {
         return $current['kind'] === 'document'
             ? $this->renderDocument($current, $index)
-            : $this->renderGeneratedIndex($current);
+            : $this->renderGeneratedIndex($current, $index);
     }
 
     /**
@@ -203,16 +203,24 @@ final readonly class DocumentationRenderer
 
     /**
      * @param array<string,mixed> $current
+     * @param array<string,mixed> $index
      * @return array<string,mixed>
      */
-    private function renderGeneratedIndex(array $current): array
+    private function renderGeneratedIndex(array $current, array $index): array
     {
+        $intro = is_array($current['intro'] ?? null)
+            ? $this->renderDocument($current['intro'], $index)
+            : null;
+
         return [
             'kind'        => 'generated-index',
-            'html'        => '',
+            'format'      => is_array($intro) ? (string) ($intro['format'] ?? '') : null,
+            'html'        => is_array($intro) ? (string) ($intro['html'] ?? '') : '',
+            'module'      => is_array($intro) ? (string) ($intro['module'] ?? '') : '',
+            'has_intro'   => is_array($intro),
             'items'       => $this->generatedIndexItems($current),
-            'toc'         => [],
-            'diagnostics' => [],
+            'toc'         => is_array($intro) && is_array($intro['toc'] ?? null) ? $intro['toc'] : [],
+            'diagnostics' => is_array($intro) && is_array($intro['diagnostics'] ?? null) ? $intro['diagnostics'] : [],
         ];
     }
 

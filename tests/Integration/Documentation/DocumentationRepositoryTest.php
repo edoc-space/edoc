@@ -142,6 +142,132 @@ final class DocumentationRepositoryTest extends IntegrationTestCase
         }
     }
 
+    public function testPublicViewScopesExplicitSidebarsAndRootRedirectsToDefaultSidebar(): void
+    {
+        [$documentation, $root] = $this->documentationWith([
+            'app/index.json' => <<<'JSON'
+                {
+                  "label": "Application",
+                  "position": 2,
+                  "sidebar": true,
+                  "default_sidebar": true,
+                  "link": { "type": "generated-index" }
+                }
+                JSON,
+            'legal/index.json' => <<<'JSON'
+                {
+                  "label": "Legal",
+                  "position": 1,
+                  "sidebar": true,
+                  "link": { "type": "generated-index" }
+                }
+                JSON,
+            'app/owner.md' => <<<'MD'
+                ---
+                title: Owner
+                sidebar_position: 1
+                ---
+
+                # Owner
+                MD,
+            'app/manager.md' => <<<'MD'
+                ---
+                title: Manager
+                sidebar_position: 2
+                ---
+
+                # Manager
+                MD,
+            'legal/terms.md' => <<<'MD'
+                ---
+                title: Terms
+                sidebar_position: 1
+                ---
+
+                # Terms
+                MD,
+        ]);
+
+        try {
+            $redirect = $documentation->redirectFor(null);
+            $owner    = $documentation->publicView('app/owner');
+            $manager  = $documentation->publicView('app/manager');
+            $legal    = $documentation->publicView('legal/terms');
+
+            $this->assertSame('/docs/app', $redirect['to'] ?? null);
+            $this->assertSame(302, $redirect['status'] ?? null);
+
+            $this->assertSame('Application', $owner['active_sidebar']['label'] ?? null);
+            $this->assertSame(['Owner', 'Manager'], array_column($owner['tree'], 'label'));
+            $this->assertNull($owner['prev']);
+            $this->assertSame('Manager', $owner['next']['title'] ?? null);
+
+            $this->assertSame('Application', $manager['active_sidebar']['label'] ?? null);
+            $this->assertSame('Owner', $manager['prev']['title'] ?? null);
+            $this->assertNull($manager['next']);
+
+            $this->assertSame('Legal', $legal['active_sidebar']['label'] ?? null);
+            $this->assertSame(['Terms'], array_column($legal['tree'], 'label'));
+            $this->assertNull($legal['prev']);
+            $this->assertNull($legal['next']);
+        } finally {
+            $this->removeDirectory($root);
+        }
+    }
+
+    public function testGeneratedIndexRendersMarkdownIntroAndKeepsGeneratedChildren(): void
+    {
+        [$documentation, $root] = $this->documentationWith([
+            'client/index.json' => <<<'JSON'
+                {
+                  "label": "Client",
+                  "description": "Client route",
+                  "link": { "type": "generated-index" }
+                }
+                JSON,
+            'client/index.md' => <<<'MD'
+                # Client onboarding
+
+                Intro text for fulfillment clients.
+
+                [Open registration](./01-registration)
+                MD,
+            'client/01-registration.md' => <<<'MD'
+                ---
+                title: Registration
+                sidebar_position: 1
+                ---
+
+                # Registration
+                MD,
+        ]);
+
+        try {
+            $view  = $documentation->publicView('client');
+            $index = $documentation->searchIndex();
+
+            $this->assertSame('generated-index', $view['document']['kind'] ?? null);
+            $this->assertTrue($view['document']['has_intro'] ?? false);
+            $this->assertStringContainsString('Client onboarding', $view['document']['html'] ?? '');
+            $this->assertStringContainsString('/docs/client/01-registration', $view['document']['html'] ?? '');
+            $this->assertSame(['Registration'], array_column($view['document']['items'] ?? [], 'title'));
+            $this->assertSame(['Registration'], array_column($view['tree'][0]['children'] ?? [], 'label'));
+
+            $entry = null;
+            foreach ($index['entries'] as $candidate) {
+                if (($candidate['href'] ?? null) === '/docs/client') {
+                    $entry = $candidate;
+                    break;
+                }
+            }
+
+            $this->assertNotNull($entry);
+            $this->assertStringContainsString('Intro text for fulfillment clients.', $entry['content'] ?? '');
+        } finally {
+            $this->removeDirectory($root);
+        }
+    }
+
     public function testSearchIndexReturnsPreparedEntries(): void
     {
         [$documentation, $root] = $this->documentationWith([

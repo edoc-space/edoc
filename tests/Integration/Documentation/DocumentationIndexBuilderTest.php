@@ -159,6 +159,94 @@ final class DocumentationIndexBuilderTest extends IntegrationTestCase
         }
     }
 
+    public function testGeneratedIndexIntroSupportsMdxAndDoesNotRegisterAsSeparatePage(): void
+    {
+        [$builder, $root] = $this->builderWith([
+            'client/index.json' => <<<'JSON'
+                {
+                  "label": "Client",
+                  "content": { "source": "index.mdx" },
+                  "link": { "type": "generated-index" }
+                }
+                JSON,
+            'client/index.mdx' => <<<'MDX'
+                # Client route
+
+                <Section title="Intro">
+                  Rich MDX intro.
+                </Section>
+                MDX,
+            'client/registration.md' => <<<'MD'
+                ---
+                title: Registration
+                ---
+
+                # Registration
+                MD,
+        ]);
+
+        try {
+            $index = $builder->build();
+
+            $this->assertSame('category', $index['pages']['client']['kind'] ?? null);
+            $this->assertSame('mdx', $index['pages']['client']['intro']['format'] ?? null);
+            $this->assertSame('client/index.mdx', $index['pages']['client']['intro']['document_path'] ?? null);
+            $this->assertSame(['Registration'], array_column($index['categories']['client']['children'] ?? [], 'label'));
+            $this->assertNotContains('slug.duplicate', array_column($index['diagnostics'], 'code'));
+            $this->assertStringContainsString('Rich MDX intro.', $index['pages']['client']['search_text'] ?? '');
+        } finally {
+            $this->removeDirectory($root);
+        }
+    }
+
+    public function testDuplicateDefaultSidebarAddsDiagnosticAndUsesFirstDefault(): void
+    {
+        [$builder, $root] = $this->builderWith([
+            'app/index.json' => <<<'JSON'
+                {
+                  "label": "Application",
+                  "position": 2,
+                  "sidebar": true,
+                  "default_sidebar": true,
+                  "link": { "type": "generated-index" }
+                }
+                JSON,
+            'legal/index.json' => <<<'JSON'
+                {
+                  "label": "Legal",
+                  "position": 1,
+                  "sidebar": true,
+                  "default_sidebar": true,
+                  "link": { "type": "generated-index" }
+                }
+                JSON,
+            'app/owner.md' => <<<'MD'
+                ---
+                title: Owner
+                ---
+
+                # Owner
+                MD,
+            'legal/terms.md' => <<<'MD'
+                ---
+                title: Terms
+                ---
+
+                # Terms
+                MD,
+        ]);
+
+        try {
+            $index = $builder->build();
+
+            $this->assertContains('sidebar.default_duplicate', array_column($index['diagnostics'], 'code'));
+            $this->assertSame('legal', $index['first_sidebar_slug'] ?? null);
+            $this->assertSame('legal', $index['default_sidebar_slug'] ?? null);
+        } finally {
+            $this->removeDirectory($root);
+        }
+    }
+
     public function testMdxSearchContextsSkipImportsAndJsxScaffolding(): void
     {
         [$builder, $root] = $this->builderWith([

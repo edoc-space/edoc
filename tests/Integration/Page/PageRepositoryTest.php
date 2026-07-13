@@ -21,6 +21,7 @@ final class PageRepositoryTest extends IntegrationTestCase
         $this->assertSame('E-Doc', $view['current']['title'] ?? null);
         $this->assertSame('/', $view['current']['href'] ?? null);
         $this->assertSame('home', $view['current']['layout'] ?? null);
+        $this->assertSame('fluid', $view['current']['container'] ?? null);
         $this->assertSame('mdx', $view['document']['format'] ?? null);
         $this->assertSame('/local/storage/edoc/en/pages/index.mdx', $view['document']['module'] ?? null);
         $this->assertContains('Home', array_column($view['navigation'], 'label'));
