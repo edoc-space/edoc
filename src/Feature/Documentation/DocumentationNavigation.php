@@ -40,7 +40,7 @@ final readonly class DocumentationNavigation
                 continue;
             }
 
-            return is_array($node['children'] ?? null) ? $node['children'] : [];
+            return [$node];
         }
 
         return $tree;

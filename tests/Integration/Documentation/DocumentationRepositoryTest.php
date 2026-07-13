@@ -186,19 +186,30 @@ final class DocumentationRepositoryTest extends IntegrationTestCase
 
                 # Terms
                 MD,
+            'legal/privacy.md' => <<<'MD'
+                ---
+                title: Privacy
+                sidebar_position: 2
+                ---
+
+                # Privacy
+                MD,
         ]);
 
         try {
-            $redirect = $documentation->redirectFor(null);
-            $owner    = $documentation->publicView('app/owner');
-            $manager  = $documentation->publicView('app/manager');
-            $legal    = $documentation->publicView('legal/terms');
+            $redirect  = $documentation->redirectFor(null);
+            $owner     = $documentation->publicView('app/owner');
+            $manager   = $documentation->publicView('app/manager');
+            $legalRoot = $documentation->publicView('legal');
+            $terms     = $documentation->publicView('legal/terms');
+            $privacy   = $documentation->publicView('legal/privacy');
 
             $this->assertSame('/docs/app', $redirect['to'] ?? null);
             $this->assertSame(302, $redirect['status'] ?? null);
 
             $this->assertSame('Application', $owner['active_sidebar']['label'] ?? null);
-            $this->assertSame(['Owner', 'Manager'], array_column($owner['tree'], 'label'));
+            $this->assertSame(['Application'], array_column($owner['tree'], 'label'));
+            $this->assertSame(['Owner', 'Manager'], array_column($owner['tree'][0]['children'] ?? [], 'label'));
             $this->assertNull($owner['prev']);
             $this->assertSame('Manager', $owner['next']['title'] ?? null);
 
@@ -206,10 +217,21 @@ final class DocumentationRepositoryTest extends IntegrationTestCase
             $this->assertSame('Owner', $manager['prev']['title'] ?? null);
             $this->assertNull($manager['next']);
 
-            $this->assertSame('Legal', $legal['active_sidebar']['label'] ?? null);
-            $this->assertSame(['Terms'], array_column($legal['tree'], 'label'));
-            $this->assertNull($legal['prev']);
-            $this->assertNull($legal['next']);
+            $this->assertSame('Legal', $legalRoot['active_sidebar']['label'] ?? null);
+            $this->assertSame('Legal', $legalRoot['tree'][0]['label'] ?? null);
+            $this->assertSame('/docs/legal', $legalRoot['tree'][0]['href'] ?? null);
+            $this->assertSame(['Terms', 'Privacy'], array_column($legalRoot['tree'][0]['children'] ?? [], 'label'));
+            $this->assertNull($legalRoot['prev']);
+            $this->assertNull($legalRoot['next']);
+
+            $this->assertSame('Legal', $terms['active_sidebar']['label'] ?? null);
+            $this->assertSame(['Legal'], array_column($terms['tree'], 'label'));
+            $this->assertSame(['Terms', 'Privacy'], array_column($terms['tree'][0]['children'] ?? [], 'label'));
+            $this->assertNull($terms['prev']);
+            $this->assertSame('Privacy', $terms['next']['title'] ?? null);
+
+            $this->assertSame('Terms', $privacy['prev']['title'] ?? null);
+            $this->assertNull($privacy['next']);
         } finally {
             $this->removeDirectory($root);
         }

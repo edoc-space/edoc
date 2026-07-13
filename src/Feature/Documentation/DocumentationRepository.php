@@ -106,7 +106,7 @@ final readonly class DocumentationRepository
 
         $activeSidebar = $this->navigation->activeSidebar($current, $index['sidebars']);
         $activeTree    = $this->activeTree($index, $activeSidebar);
-        $activePages   = $this->activePages($index, $activeTree);
+        $activePages   = $this->activePages($index, $activeTree, $activeSidebar);
 
         $document   = $this->renderer->render($current, $index);
         $navigation = $this->navigation->prevNext($activePages, $currentSlug);
@@ -418,12 +418,21 @@ final readonly class DocumentationRepository
     /**
      * @param array<string,mixed> $index
      * @param list<array<string,mixed>> $activeTree
+     * @param array<string,mixed>|null $activeSidebar
      * @return list<array<string,mixed>>
      */
-    private function activePages(array $index, array $activeTree): array
+    private function activePages(array $index, array $activeTree, ?array $activeSidebar): array
     {
         if (($index['sidebars_explicit'] ?? false) !== true) {
             return is_array($index['flat_pages'] ?? null) ? $index['flat_pages'] : [];
+        }
+
+        if (
+            $activeSidebar !== null
+            && count($activeTree) === 1
+            && (string) ($activeTree[0]['path'] ?? '') === (string) ($activeSidebar['path'] ?? '')
+        ) {
+            $activeTree = is_array($activeTree[0]['children'] ?? null) ? $activeTree[0]['children'] : [];
         }
 
         return $this->navigation->flatPages(
