@@ -16,6 +16,7 @@ use App\Feature\Page\Query\ReadPublicPage\ReadPublicPageHandler;
 use App\Feature\Site\SiteConfigRepository;
 use App\Tests\Support\IntegrationTestCase;
 use PhpSoftBox\Markdown\MarkdownRenderer;
+use PhpSoftBox\Session\SessionInterface;
 use PhpSoftBox\Storage\Contracts\StorageInterface;
 use PhpSoftBox\TestUtils\Fixture\FixtureRunner;
 use PHPUnit\Framework\Attributes\Group;
@@ -30,6 +31,7 @@ final class ApplicationContainerTest extends IntegrationTestCase
         $this->assertInstanceOf(FixtureRunner::class, $container->get(FixtureRunner::class));
         $this->assertInstanceOf(StorageInterface::class, $container->get(StorageInterface::class));
         $this->assertInstanceOf(MarkdownRenderer::class, $container->get(MarkdownRenderer::class));
+        $this->assertInstanceOf(SessionInterface::class, $container->get(SessionInterface::class));
         $this->assertInstanceOf(MarkdownContentRenderer::class, $container->get(ContentRendererInterface::class));
         $this->assertInstanceOf(DocumentationIndexBuilder::class, $container->get(DocumentationIndexBuilder::class));
         $this->assertInstanceOf(DocumentationNavigation::class, $container->get(DocumentationNavigation::class));
