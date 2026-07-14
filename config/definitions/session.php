@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 use PhpSoftBox\Config\Config;
 use PhpSoftBox\Cookie\SameSite;
-use PhpSoftBox\Session\CookieSecurePolicy;
-use PhpSoftBox\Session\NativeSessionStore;
+use PhpSoftBox\Session\Config\CookieSecurePolicy;
+use PhpSoftBox\Session\Config\SessionConfig;
 use PhpSoftBox\Session\Session;
-use PhpSoftBox\Session\SessionConfig;
 use PhpSoftBox\Session\SessionInterface;
-use PhpSoftBox\Session\SessionStoreInterface;
+use PhpSoftBox\Session\Store\NativeSessionStore;
+use PhpSoftBox\Session\Store\SessionStoreInterface;
 use Psr\Container\ContainerInterface;
 
 use function PhpSoftBox\Container\factory;
