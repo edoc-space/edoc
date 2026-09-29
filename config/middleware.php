@@ -6,11 +6,13 @@ use PhpSoftBox\Application\Application;
 use PhpSoftBox\Application\Middleware\BodyParserMiddleware;
 use PhpSoftBox\Application\Middleware\CorsMiddleware;
 use PhpSoftBox\Application\Middleware\MethodOverrideMiddleware;
+use PhpSoftBox\Application\Middleware\TrustedProxyMiddleware;
 use PhpSoftBox\Inertia\Middleware\InertiaMiddleware;
 use PhpSoftBox\Inertia\Middleware\InertiaShareMiddleware;
 use PhpSoftBox\Profiler\Middleware\ProfilerMiddleware;
 
 return static function (Application $app): void {
+    $app->add(TrustedProxyMiddleware::class, priority: 1100);
     $app->middlewareGroup('api', [
         CorsMiddleware::class,
         BodyParserMiddleware::class,

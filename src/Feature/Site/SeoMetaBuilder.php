@@ -7,7 +7,6 @@ namespace App\Feature\Site;
 use Psr\Http\Message\ServerRequestInterface;
 
 use function array_values;
-use function explode;
 use function is_array;
 use function is_string;
 use function preg_match;
@@ -51,8 +50,8 @@ final readonly class SeoMetaBuilder
     private function origin(ServerRequestInterface $request): string
     {
         $uri        = $request->getUri();
-        $scheme     = $this->headerValue($request, 'x-forwarded-proto') ?: $uri->getScheme() ?: 'https';
-        $host       = $this->headerValue($request, 'x-forwarded-host') ?: $request->getHeaderLine('Host');
+        $scheme     = $uri->getScheme() ?: 'https';
+        $host       = $request->getHeaderLine('Host');
         $appendPort = false;
 
         if ($host === '') {
@@ -75,16 +74,6 @@ final readonly class SeoMetaBuilder
         }
 
         return $scheme . '://' . $host;
-    }
-
-    private function headerValue(ServerRequestInterface $request, string $name): string
-    {
-        $value = trim($request->getHeaderLine($name));
-        if (str_contains($value, ',')) {
-            [$value] = explode(',', $value, 2);
-        }
-
-        return trim($value);
     }
 
     /**

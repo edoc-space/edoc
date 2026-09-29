@@ -139,7 +139,7 @@ final class DocumentationIndexBuilder
             try {
                 $cached = $this->profile(
                     'documentation.index.cache_get',
-                    fn (): mixed               => $this->cache?->get($cacheKey),
+                    fn (): mixed => $this->cache?->get($cacheKey),
                     [...$spanTags, 'cache_key' => $cacheKey],
                 );
                 if (is_array($cached)) {
@@ -158,7 +158,7 @@ final class DocumentationIndexBuilder
             try {
                 $this->profile(
                     'documentation.index.cache_set',
-                    fn (): bool                => $this->cache?->set($cacheKey, $index, $this->cacheTtl()) ?? false,
+                    fn (): bool => $this->cache?->set($cacheKey, $index, $this->cacheTtl()) ?? false,
                     [...$spanTags, 'cache_key' => $cacheKey],
                 );
             } catch (Throwable) {

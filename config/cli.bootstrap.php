@@ -58,4 +58,4 @@ foreach ($providers as $provider) {
     $instance->register($registry);
 }
 
-return new CliApp($registry, new ConsoleIo(), $container);
+return new CliApp($registry, new ConsoleIo(), $container, environmentResolver: static fn (): string => (string) env('APP_ENV', 'dev'));

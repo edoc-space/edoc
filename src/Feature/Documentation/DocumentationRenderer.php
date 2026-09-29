@@ -84,7 +84,7 @@ final readonly class DocumentationRenderer
             try {
                 $cached = $this->profile(
                     'documentation.document.cache_get',
-                    fn (): mixed               => $this->cache?->get($cacheKey),
+                    fn (): mixed => $this->cache?->get($cacheKey),
                     [...$spanTags, 'cache_key' => $cacheKey],
                 );
                 if (is_array($cached)) {
@@ -178,7 +178,7 @@ final readonly class DocumentationRenderer
         try {
             $this->profile(
                 'documentation.document.cache_set',
-                fn (): bool            => $this->cache?->set($cacheKey, $document, $this->cacheTtl()) ?? false,
+                fn (): bool => $this->cache?->set($cacheKey, $document, $this->cacheTtl()) ?? false,
                 [...$tags, 'cache_key' => $cacheKey],
             );
         } catch (Throwable) {

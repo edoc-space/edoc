@@ -21,7 +21,7 @@ return [
 
         return new ConfigFactory(
             baseDir: $baseDir,
-            env: $env,
+            environment: $env,
             encryptedValueResolver: $resolver,
             providers: [
                 new PhpFileDataProvider($configDir . '/*.php'),
