@@ -30,7 +30,7 @@ return [
         }
 
         $isSecureSession = $config['secure'] ?? null;
-        if (is_numeric($isSecureSession)) {
+        if (is_bool($isSecureSession) || is_numeric($isSecureSession)) {
             $securePolicy = CookieSecurePolicy::fromBoolean((bool) $isSecureSession);
         } else {
             $securePolicy = CookieSecurePolicy::from($config['secure'] ?? 'always');

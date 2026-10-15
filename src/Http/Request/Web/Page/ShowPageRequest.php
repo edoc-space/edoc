@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Request\Web\Page;
 
+use PhpSoftBox\Filter\NullIfEmptyFilter;
+use PhpSoftBox\Filter\TrimFilter;
 use PhpSoftBox\Request\RequestSchema;
-use PhpSoftBox\Validator\Filter\NullIfEmptyFilter;
-use PhpSoftBox\Validator\Filter\TrimFilter;
 use PhpSoftBox\Validator\Rule\StringValidation;
 
 use function is_string;

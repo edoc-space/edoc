@@ -14,6 +14,7 @@
         "phpsoftbox/cookie": "^1",
         "phpsoftbox/encryptor": "^1",
         "phpsoftbox/env": "^1",
+        "phpsoftbox/filter": "^1",
         "phpsoftbox/http-emitter": "^1",
         "phpsoftbox/http-message": "^1",
         "phpsoftbox/inertia": "^1",
