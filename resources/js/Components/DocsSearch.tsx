@@ -1,5 +1,6 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
+import { useModalFocus } from './useModalFocus';
 import type { SiteUiText } from '../Layouts/SiteLayout';
 
 const SEARCH_RESULT_LIMIT = 8;
@@ -67,6 +68,8 @@ export function DocsSearch({
   const [apiResults, setApiResults] = React.useState<SearchResult[]>([]);
   const [apiStatus, setApiStatus] = React.useState<SearchStatus>('idle');
   const inputRef = React.useRef<HTMLInputElement | null>(null);
+  const dialogId = React.useId();
+  useModalFocus(isOpen, dialogId, inputRef);
   const staticLoadRef = React.useRef<string | null>(null);
   const [pressedShortcutKeys, setPressedShortcutKeys] = React.useState({ modifier: false, key: false });
   const isQueryActive = query.trim() !== '';
@@ -222,26 +225,12 @@ export function DocsSearch({
     };
 
     window.addEventListener('keydown', handleKeyDown);
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = previousOverflow;
     };
   }, [handleClose, isOpen]);
 
-  React.useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
-    const frameId = window.requestAnimationFrame(() => {
-      inputRef.current?.focus({ preventScroll: true });
-    });
-
-    return () => window.cancelAnimationFrame(frameId);
-  }, [isOpen]);
 
   const entries = resolvedProvider.type === 'memory'
     ? resolvedProvider.entries
@@ -273,7 +262,7 @@ export function DocsSearch({
       {isOpen && typeof document !== 'undefined' ? createPortal(
         <div className="docs-search-overlay" role="presentation">
           <button type="button" className="docs-search-backdrop" aria-label={ui.searchClose ?? 'Закрыть поиск'} onClick={handleClose} />
-          <div className="docs-search-dialog" role="dialog" aria-modal="true" aria-label={ui.searchAria ?? 'Поиск по документации'}>
+          <div id={dialogId} className="docs-search-dialog" role="dialog" aria-modal="true" aria-label={ui.searchAria ?? 'Поиск по документации'}>
             <div className="docs-search-field">
               <span className="docs-search-icon" aria-hidden="true" />
               <input

@@ -1,5 +1,6 @@
 import React from 'react';
-import { Drawer, Dropdown } from '@phpsoftbox/react-softbox';
+import { Dropdown } from '@phpsoftbox/react-softbox';
+import { Drawer } from '../Components/Drawer';
 import logoUrl from '../../images/logo.svg';
 
 export type SiteNavigationItem = {
@@ -35,6 +36,8 @@ export type SiteFooterColumn = {
 };
 
 export type SiteFooterData = {
+  /** Request-time locale feed; null when the blog is disabled. */
+  feedUrl?: string | null;
   enabled?: boolean;
   description?: string;
   columns?: SiteFooterColumn[];
@@ -109,7 +112,7 @@ export type SiteUiText = {
   footerPoweredBy?: string;
 };
 
-type SiteHeaderProps = {
+export type SiteHeaderProps = {
   navigation: SiteNavigationItem[];
   site?: SiteInfo;
   locales?: SiteLocaleItem[];
@@ -122,7 +125,7 @@ type SiteHeaderProps = {
   mobileControls?: React.ReactNode;
 };
 
-type SiteFooterProps = {
+export type SiteFooterProps = {
   navigation: SiteNavigationItem[];
   site?: SiteInfo;
   footer?: SiteFooterData;

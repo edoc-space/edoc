@@ -8,6 +8,9 @@ import { Section } from './Section';
 import { Slider } from './Slider';
 import { Tab, Tabs } from './Tabs';
 import { Testimonial } from './Testimonial';
+import { Filters } from './Filters';
+import { ArticleCard, EmptyState, LatestArticles, TagList } from './Collections';
+import { BlocksCatalog } from './BlocksCatalog';
 
 export { Accordion, Card, Cta, Feature } from './ContentBlocks';
 export { HelpCenter, HelpFaq, HelpLink, HelpSection } from './HelpCenter';
@@ -18,11 +21,18 @@ export { Section } from './Section';
 export { Slider } from './Slider';
 export { Tab, Tabs } from './Tabs';
 export { Testimonial } from './Testimonial';
+export { Filters } from './Filters';
+export { ArticleCard, EmptyState, LatestArticles, TagList } from './Collections';
+export { BlocksCatalog } from './BlocksCatalog';
+export { Badge } from '@phpsoftbox/react-softbox';
+export type { FilterOption } from './Filters';
+export type { PublicArticles } from './Collections';
 export { MdxAnchor, MdxH1, MdxH2, MdxH3, MdxH4, MdxH5, MdxH6, MdxImage } from './MarkdownElements';
 export type {
   ActionProps,
   BlockProps,
   CommonBlockProps,
+  CardProps,
   GalleryProps,
   HelpCenterProps,
   HelpFaqProps,
@@ -48,6 +58,12 @@ export const mdxComponents = {
   h6: MdxH6,
   img: MdxImage,
   Accordion,
+  BlocksCatalog,
+  Filters,
+  ArticleCard,
+  EmptyState,
+  LatestArticles,
+  TagList,
   Card,
   Columns,
   Cta,

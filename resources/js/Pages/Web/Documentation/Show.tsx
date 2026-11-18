@@ -1,5 +1,7 @@
+import { SiteShell, SiteHeader, SiteFooter } from '../../../Themes/components';
 import React from 'react';
-import { Drawer, Dropdown, Heading, Text } from '@phpsoftbox/react-softbox';
+import { Dropdown, Heading, Text } from '@phpsoftbox/react-softbox';
+import { Drawer } from '../../../Components/Drawer';
 import { DocsSearch, SearchEntry } from '../../../Components/DocsSearch';
 import { MarkdownDocument } from '../../../Components/MarkdownDocument';
 import { MdxDocument } from '../../../Components/MdxDocument';
@@ -7,9 +9,7 @@ import { usePageScrollRestoration } from '../../../Components/usePageScrollResto
 import {
   mergeLocaleAlternates,
   SiteAlternateLink,
-  SiteFooter,
   SiteFooterData,
-  SiteHeader,
   SiteInfo,
   SiteLocaleItem,
   SiteUiText,
@@ -119,7 +119,7 @@ type DocumentationVersions = {
   items?: DocumentationVersionItem[];
 };
 
-type Props = {
+export type DocumentationProps = {
   title: string;
   app?: {
     env?: string;
@@ -157,7 +157,23 @@ type Props = {
 const TREE_EXPANDED_STORAGE_KEY = 'edoc.docs.tree.expanded.v1';
 const SIDEBAR_COLLAPSED_STORAGE_KEY = 'edoc.docs.sidebar.collapsed.v1';
 
-export default function DocumentationShow({ title, app, documentation, web, meta }: Props) {
+export default function DocumentationShow({ title, app, documentation, web, meta }: DocumentationProps) {
+  const layout = React.useRef<HTMLElement>(null);
+  React.useLayoutEffect(() => {
+    const element = layout.current;
+    const header = element?.querySelector<HTMLElement>('.docs-header');
+    if (!element || !header) return;
+    const footer = element.querySelector<HTMLElement>('.docs-footer');
+    const measure = () => {
+      element.style.setProperty('--docs-header-height', `${header.getBoundingClientRect().height}px`);
+      element.style.setProperty('--docs-footer-height', `${footer?.getBoundingClientRect().height ?? 72}px`);
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(header);
+    if (footer) observer.observe(footer);
+    return () => observer.disconnect();
+  }, []);
   const current = documentation.current;
   const sidebars = documentation.sidebars ?? [];
   const activeSidebar = documentation.active_sidebar;
@@ -330,10 +346,10 @@ export default function DocumentationShow({ title, app, documentation, web, meta
   ) : null;
 
   return (
-    <div className="docs-shell">
-      <main className="docs-layout" data-sidebar-collapsed={isSidebarCollapsed}>
+    <SiteShell kind="documentation" className="docs-shell">
+      <main ref={layout} className="docs-layout" data-sidebar-collapsed={isSidebarCollapsed}>
         <aside className="docs-sidebar" aria-label={ui.documentationNavAria ?? 'Навигация документации'}>
-          <nav className="docs-tree-nav" aria-label={ui.documentationNavAria ?? 'Оглавление'}>
+          <nav className="docs-tree-nav" inert={isSidebarCollapsed} aria-label={ui.documentationNavAria ?? 'Оглавление'}>
             {documentation.tree.length > 0 ? (
               <DocumentationTree
                 nodes={documentation.tree}
@@ -503,7 +519,7 @@ export default function DocumentationShow({ title, app, documentation, web, meta
           />
         ) : null}
       </Drawer>
-    </div>
+    </SiteShell>
   );
 }
 

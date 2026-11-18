@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Feature\Blog\BlogRepository;
 use App\Feature\Documentation\DocumentationRepository;
 use App\Feature\Page\PageRepository;
 use App\Feature\Site\SiteConfigRepository;
@@ -107,6 +108,7 @@ return [
             $container->get(DocumentationRepository::class),
             $container->get(SiteConfigRepository::class),
             $container->get(SiteLocaleResolver::class),
+            $container->get(BlogRepository::class),
         );
     }),
 

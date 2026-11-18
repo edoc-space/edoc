@@ -1,0 +1,36 @@
+---
+title: Проверка оформления
+description: Навигация, поиск, оглавление и обычный MDX.
+---
+
+## Чтение и навигация
+
+THEME_PARITY_MARKER — одинаковый текст для двух тем.
+
+![Синтетическая иллюстрация](/storage/edoc/static/specimen.svg)
+
+## Код и таблица
+
+```php
+<?php echo 'E-Doc';
+```
+
+| Формат | Назначение |
+| --- | --- |
+| Markdown | Текст |
+| MDX | Интерактивность |
+
+## Интерактивный блок
+
+<div className="markdown-tabs">
+  <div className="markdown-tabs__nav" role="tablist" aria-label="Пример вкладок">
+    <button type="button" className="markdown-tabs__tab markdown-tabs__tab--active" role="tab" data-tab="first" aria-selected="true">Первый</button>
+    <button type="button" className="markdown-tabs__tab" role="tab" data-tab="second" aria-selected="false">Второй</button>
+  </div>
+  <div className="markdown-tabs__panels">
+    <div className="markdown-tabs__panel markdown-tabs__panel--active" role="tabpanel" data-tab="first">Первая вкладка</div>
+    <div className="markdown-tabs__panel" role="tabpanel" data-tab="second">Вторая вкладка</div>
+  </div>
+</div>
+
+[О проверке](/about)

@@ -33,6 +33,14 @@ export type CommonBlockProps = BlockProps & ActionProps & {
   icon?: string;
 };
 
+/** Whole-card links contain noninteractive content; title/action links allow sibling actions. */
+export type CardProps = Omit<CommonBlockProps, 'href'> & {
+  headingLevel?: 2 | 3;
+  metadata?: React.ReactNode;
+  media?: React.ReactNode;
+} & ({ linkPlacement: 'card'; href: string; actions?: never }
+  | { linkPlacement?: 'title' | 'action'; href?: string; actions?: React.ReactNode });
+
 export type TestimonialProps = BlockProps & {
   author?: string;
   role?: string;

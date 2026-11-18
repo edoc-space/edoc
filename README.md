@@ -281,3 +281,13 @@ composer test
 yarn build
 npx tsc --noEmit
 ```
+
+## Темы сайта
+
+Корневой `site.json` выбирает `theme.id`: `default` (также без настройки), `local` из `theme/` контентного корня или имя установленного npm-пакета с `theme.json`. Контракт v1 и типы экспортируются из `@/Themes/api`; доступны SiteShell/Header/Footer/Page/Documentation/Error с fallback. Полное руководство: `local/storage/edoc/ru/docs/content/themes.md` и EN-аналог.
+
+После смены темы или её исходников выполните production `yarn build` для этого сайта. `public/build/theme.json` фиксирует выбор/версию/fingerprint без абсолютных путей; prod PHP отклоняет отсутствующий или stale build кодом 503 и объясняет исправление. HTTP не выбирает импорт и не скачивает пакеты. Каждый сайт собирается отдельно.
+
+### Opt-in blog
+
+Root `site.json` may enable `blog.enabled` (default false). Articles live in `{locale}/blog/`; date/draft are evaluated by the server on every request. `yarn build` prepares the public runtime and separate private article graphs in `local/build/blog`, outside static/public/cache pruning. Keep private outputs per site, read-only for PHP, with no nginx alias. See the user article `docs/content/blog` for dates, imports, protected Markdown attachments and deployment boundaries.

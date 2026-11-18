@@ -1,13 +1,13 @@
+import { SiteShell, SiteHeader, SiteFooter } from '../../../Themes/components';
 import React from 'react';
 import { MarkdownDocument } from '../../../Components/MarkdownDocument';
 import { MdxDocument } from '../../../Components/MdxDocument';
+import type { PublicArticles } from '../../../Components/Mdx/Collections';
 import { usePageScrollRestoration } from '../../../Components/usePageScrollRestoration';
 import {
   mergeLocaleAlternates,
   SiteAlternateLink,
-  SiteFooter,
   SiteFooterData,
-  SiteHeader,
   SiteInfo,
   SiteLocaleItem,
   SiteUiText,
@@ -27,7 +27,8 @@ type Diagnostic = {
   line?: number | null;
 };
 
-type Props = {
+export type PageProps = {
+  latestArticles?: PublicArticles;
   title: string;
   app?: {
     env?: string;
@@ -64,7 +65,7 @@ type Props = {
   };
 };
 
-export default function PageShow({ app, page, web, meta }: Props) {
+export default function PageShow({ app, page, web, meta, latestArticles }: PageProps) {
   const showDiagnostics = app?.env !== 'prod' && page.diagnostics.length > 0;
   const navigation = web?.navigation ?? page.navigation;
   const locales = mergeLocaleAlternates(web?.locales, meta?.alternates);
@@ -73,7 +74,7 @@ export default function PageShow({ app, page, web, meta }: Props) {
   usePageScrollRestoration(`page.${page.current.href}`);
 
   return (
-    <div className="page-shell" data-layout={page.current.layout} data-container={page.current.container ?? 'fluid'}>
+    <SiteShell kind="page" className="page-shell" data-layout={page.current.layout} data-container={page.current.container ?? 'fluid'}>
       <SiteHeader
         className="page-header"
         navClassName="page-header-nav"
@@ -93,6 +94,7 @@ export default function PageShow({ app, page, web, meta }: Props) {
               heroBefore={breadcrumbsNode}
               locale={web?.locale}
               ui={web?.ui}
+              latestArticles={latestArticles}
             />
           ) : (
             <>
@@ -109,7 +111,7 @@ export default function PageShow({ app, page, web, meta }: Props) {
       </main>
 
       <SiteFooter navigation={navigation} site={web?.site} footer={web?.footer} ui={web?.ui} />
-    </div>
+    </SiteShell>
   );
 }
 
@@ -130,7 +132,7 @@ function PageBreadcrumbs({ items, ui }: { items: NavigationItem[]; ui?: SiteUiTe
   );
 }
 
-function pageBreadcrumbs(current: Props['page']['current'], navigation: NavigationItem[]): NavigationItem[] {
+function pageBreadcrumbs(current: PageProps['page']['current'], navigation: NavigationItem[]): NavigationItem[] {
   if (current.href === '/') {
     return [];
   }
