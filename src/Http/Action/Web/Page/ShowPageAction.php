@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Action\Web\Page;
 
+use App\Feature\Blog\LatestArticles;
 use App\Feature\Page\PageException;
 use App\Feature\Page\Query\ReadPublicPage\ReadPublicPageHandler;
 use App\Feature\Site\SeoMetaBuilder;
@@ -22,6 +23,7 @@ final readonly class ShowPageAction
         private Inertia $inertia,
         private SeoMetaBuilder $seo,
         private SiteLocaleResolver $locales,
+        private LatestArticles $latest,
     ) {
     }
 
@@ -39,15 +41,19 @@ final readonly class ShowPageAction
             ? $this->handler->alternateLinks($page['current'])
             : [];
 
-        return $this->inertia->render('Web/Page/Show', [
+        $latest   = $this->latest->props($page['current']['latest_articles'] ?? null, $locale);
+        $response = $this->inertia->render('Web/Page/Show', [
             'title' => $title,
             'page'  => $page,
-            'meta'  => [
+            ...$latest,
+            'meta' => [
                 'title'       => $title,
                 'description' => $page['current']['description'] ?? null,
                 'language'    => $locale->code,
                 ...$this->seo->links($psrRequest, $href, $alternates),
             ],
         ]);
+
+        return $latest === [] ? $response : $response->withHeader('Cache-Control', 'no-store')->withoutHeader('ETag')->withoutHeader('Last-Modified');
     }
 }

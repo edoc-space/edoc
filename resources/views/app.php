@@ -113,6 +113,19 @@ if ($keywords !== null) {
         <?php if ($canonical !== null) : ?>
             <link rel="canonical" href="<?= $canonical ?>">
         <?php endif; ?>
+        <?php if (isset($meta['og_type'])) : ?>
+            <meta property="og:type" content="<?= htmlspecialchars((string) $meta['og_type'], ENT_QUOTES, 'UTF-8') ?>">
+            <?php if ($canonical !== null) : ?><meta property="og:url" content="<?= $canonical ?>"><?php endif; ?>
+        <?php endif; ?>
+        <?php if (is_string($meta['image'] ?? null)) : ?>
+            <meta property="og:image" content="<?= htmlspecialchars($meta['image'], ENT_QUOTES, 'UTF-8') ?>">
+        <?php endif; ?>
+        <?php if (is_string($meta['published_time'] ?? null)) : ?>
+            <meta property="article:published_time" content="<?= htmlspecialchars($meta['published_time'], ENT_QUOTES, 'UTF-8') ?>">
+        <?php endif; ?>
+        <?php if (is_string($meta['rss'] ?? null)) : ?>
+            <link rel="alternate" type="application/rss+xml" title="RSS" href="<?= htmlspecialchars($meta['rss'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+        <?php endif; ?>
         <?php foreach ($alternates as $alternate) : ?>
             <?php
             if (!is_array($alternate) || !is_string($alternate['locale'] ?? null) || !is_string($alternate['href'] ?? null)) {
@@ -124,6 +137,9 @@ if ($keywords !== null) {
             ?>
             <link rel="alternate" hreflang="<?= $alternateLocale ?>" href="<?= $alternateHref ?>">
         <?php endforeach; ?>
+        <?php if (is_string($meta['robots'] ?? null)) : ?>
+            <meta name="robots" content="<?= htmlspecialchars($meta['robots'], ENT_QUOTES, 'UTF-8') ?>">
+        <?php endif; ?>
         <?php if ($keywords !== null) : ?>
             <meta name="keywords" content="<?= $keywords ?>">
         <?php endif; ?>

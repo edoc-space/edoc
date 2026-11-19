@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Http\Middleware\BlogModulesMiddleware;
+use App\Http\Middleware\ThemeBuildMiddleware;
 use PhpSoftBox\Application\Application;
 use PhpSoftBox\Application\Middleware\BodyParserMiddleware;
 use PhpSoftBox\Application\Middleware\CorsMiddleware;
@@ -18,6 +20,8 @@ return static function (Application $app): void {
         BodyParserMiddleware::class,
     ]);
 
+    $app->add(BlogModulesMiddleware::class, priority: 1075);
+    $app->add(ThemeBuildMiddleware::class, priority: 1050);
     $app->add(ProfilerMiddleware::class, priority: 1000);
     $app->add(MethodOverrideMiddleware::class);
     $app->add(BodyParserMiddleware::class);

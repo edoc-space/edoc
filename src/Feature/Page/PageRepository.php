@@ -238,6 +238,7 @@ final readonly class PageRepository
             'layout'          => $this->stringValue($frontMatter['layout'] ?? '') ?: 'page',
             'container'       => $this->pageContainer($frontMatter['container'] ?? null),
             'description'     => $this->stringValue($frontMatter['description'] ?? ''),
+            'latest_articles' => $frontMatter['latest_articles'] ?? null,
             'translation_key' => $this->stringValue($frontMatter['translation_key'] ?? ''),
             'nav_label'       => $this->stringValue($frontMatter['nav_label'] ?? ''),
             'nav_position'    => $this->numberValue($frontMatter['nav_position'] ?? null),

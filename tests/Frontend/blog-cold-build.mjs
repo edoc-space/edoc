@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import { rmSync, writeFileSync } from 'node:fs';
+if (!process.cwd().startsWith('/app/')) throw new Error('Cold output cleanup requires disposable runtime');
+rmSync('local/build', { recursive: true, force: true });
+const build = spawnSync('yarn', ['build'], { encoding: 'utf8', env: process.env });
+writeFileSync('/evidence/cold-build.log', build.stdout + build.stderr);
+assert.equal(build.status, 0, build.stdout + build.stderr);
+const check = spawnSync('php', ['-r', `require 'vendor/autoload.php'; $r=new App\\Feature\\Theme\\ThemeResolver(getcwd(), getcwd().'/local/storage/edoc'); $m=json_decode(file_get_contents('public/build/theme.json'),true); $d=$r->diagnostic($m); echo json_encode($d); exit($d===null?0:1);`], { encoding: 'utf8' });
+writeFileSync('/evidence/cold-diagnostic.json', check.stdout);
+assert.equal(check.status, 0, check.stdout + check.stderr);
+console.log('Cold production build remains valid after private output activation.');

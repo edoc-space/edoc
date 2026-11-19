@@ -4,7 +4,7 @@
     "type": "module",
     "scripts": {
         "dev": "vite",
-        "build": "vite build"
+        "build": "node tool/build-site.mjs"
     },
     "dependencies": {
         "@inertiajs/react": "^3",

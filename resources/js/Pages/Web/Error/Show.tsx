@@ -1,15 +1,14 @@
+import { SiteShell, SiteHeader, SiteFooter } from '../../../Themes/components';
 import React from 'react';
 import {
-  SiteFooter,
   SiteFooterData,
-  SiteHeader,
   SiteInfo,
   SiteLocaleItem,
   SiteNavigationItem,
   SiteUiText,
 } from '../../../Layouts/SiteLayout';
 
-type Props = {
+export type ErrorProps = {
   title: string;
   web?: {
     site?: SiteInfo;
@@ -37,7 +36,7 @@ type Props = {
   };
 };
 
-export default function ErrorShow({ error, request, web }: Props) {
+export default function ErrorShow({ error, request, web }: ErrorProps) {
   const navigation = web?.navigation ?? [];
   const homeHref = web?.site?.brand?.href ?? '/';
   const docsHref = documentationHref(navigation, web?.locale?.url_prefix ?? '');
@@ -46,7 +45,7 @@ export default function ErrorShow({ error, request, web }: Props) {
   const errorLabel = isEnglish ? 'Error' : 'Ошибка';
 
   return (
-    <div className="page-shell" data-layout="error">
+    <SiteShell kind="error" className="page-shell" data-layout="error">
       <SiteHeader
         className="page-header"
         navClassName="page-header-nav"
@@ -79,7 +78,7 @@ export default function ErrorShow({ error, request, web }: Props) {
       </main>
 
       <SiteFooter navigation={navigation} site={web?.site} footer={web?.footer} ui={web?.ui} />
-    </div>
+    </SiteShell>
   );
 }
 

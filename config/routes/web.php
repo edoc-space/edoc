@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Action\HealthAction;
 use App\Http\Action\HomeAction;
+use App\Http\Action\Web\Blog\ShowBlogAction;
 use App\Http\Action\Web\Documentation\SearchIndexAction;
 use App\Http\Action\Web\Documentation\ShowDocumentationAction;
 use App\Http\Action\Web\Page\ShowPageAction;
@@ -55,6 +56,13 @@ $localizedRoutePrefixes = static function () use ($normalizeRouteLocale): array 
 };
 
 return static function (RouteCollector $routes) use ($localizedRoutePrefixes): void {
+    $config      = json_decode((string) @file_get_contents(dirname(__DIR__, 2) . '/local/storage/edoc/site.json'), true);
+    $blogEnabled = ($config['blog']['enabled'] ?? false) === true;
+    // Feed identity remains guarded while the optional blog routes are disabled.
+    $routes->get('/blog/rss.xml', ShowBlogAction::class)->default('path', 'rss.xml')->name('blog.rss');
+    if ($blogEnabled) {
+        $routes->get('/blog/{path*?}', ShowBlogAction::class)->name('blog.show');
+    }
     $routes->get('/', HomeAction::class)->name('home');
     $routes->get('/docs/search-index.json', SearchIndexAction::class)->name('docs.search-index');
     $routes->get('/docs/{path*?}', ShowDocumentationAction::class)->name('docs.show');
@@ -63,6 +71,11 @@ return static function (RouteCollector $routes) use ($localizedRoutePrefixes): v
     $routes->get('/__profiler/api/traces/{trace}', ProfilerReportHandler::class)->name('profiler.trace');
 
     foreach ($localizedRoutePrefixes() as $locale => $prefix) {
+        $routes->get($prefix . '/blog/rss.xml', ShowBlogAction::class)
+            ->default('path', 'rss.xml')->default('locale', $locale)->name('localized.' . $locale . '.blog.rss');
+        if ($blogEnabled) {
+            $routes->get($prefix . '/blog/{path*?}', ShowBlogAction::class)->default('locale', $locale)->name('localized.' . $locale . '.blog.show');
+        }
         $routes->get($prefix, HomeAction::class)
             ->default('locale', $locale)
             ->name('localized.' . $locale . '.home');
