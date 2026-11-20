@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 return [
     'dev_server'  => env('VITE_DEV_SERVER', 'https://vite.domain.local'),
+    'dev'         => ($mode = trim((string) env('VITE_DEV', ''))) === '' ? null : filter_var($mode, FILTER_VALIDATE_BOOL),
     'manifest'    => 'public/build/.vite/manifest.json',
     'hot_file'    => 'public/hot',
     'build_base'  => '/build',
