@@ -31,6 +31,7 @@ return [
             hotFile: $path->createPath($hotFile),
             devServer: $devServer,
             environment: $env,
+            dev: is_bool($config['dev'] ?? null) ? $config['dev'] : null,
             buildBase: $buildBase,
             ssrUrl: $ssrUrl,
             ssrEntry: $ssrEntry,

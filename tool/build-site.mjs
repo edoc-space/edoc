@@ -30,7 +30,7 @@ const mime = { '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+
 const index = JSON.parse(execFileSync('php', [resolve(engine, 'tool/blog-index.php'), site], { encoding: 'utf8' }));
 // Validate content before replacing the public app. The generation is only
 // activated after every private graph succeeds; failures close the ABI gate.
-await build({ root: engine });
+await build({ root: engine, configLoader: "runner" });
 const runtime = JSON.parse(readFileSync(resolve(engine, 'public/build/blog-runtime.json')));
 const manifest = JSON.parse(readFileSync(resolve(engine, 'public/build/.vite/manifest.json')));
 const facades = Object.fromEntries(Object.entries(runtimeEntries).map(([key, entry]) => [key, '/build/' + manifest[entry].file]));
