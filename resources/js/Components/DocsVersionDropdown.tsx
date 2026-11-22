@@ -69,4 +69,3 @@ export function DocsVersionDropdown({ versions, ui, align = 'right' }: DocsVersi
     </Dropdown>
   );
 }
-
