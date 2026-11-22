@@ -41,7 +41,7 @@ type ResolvedSearchProvider = {
   entries: SearchEntry[];
 };
 
-type DocsSearchProps = {
+export type DocsSearchProps = {
   provider: SearchProviderConfig;
   ui: SiteUiText;
   textLocale: string;

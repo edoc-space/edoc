@@ -348,7 +348,13 @@ export function mergeLocaleAlternates(
   }));
 }
 
-function LanguageSwitcher({ locales, ui }: { locales: SiteLocaleItem[]; ui?: SiteUiText }) {
+export type LanguageSwitcherProps = {
+  locales: SiteLocaleItem[];
+  ui?: SiteUiText;
+  align?: 'left' | 'right';
+};
+
+export function LanguageSwitcher({ locales, ui, align = 'right' }: LanguageSwitcherProps) {
   if (locales.length <= 1) {
     return null;
   }
@@ -357,7 +363,7 @@ function LanguageSwitcher({ locales, ui }: { locales: SiteLocaleItem[]; ui?: Sit
 
   return (
     <Dropdown
-      align="right"
+      align={align}
       placement="down"
       className="language-switcher"
       triggerClassName="language-switcher-trigger"

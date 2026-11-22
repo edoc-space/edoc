@@ -1,8 +1,9 @@
 import { SiteShell, SiteHeader, SiteFooter } from '../../../Themes/components';
 import React from 'react';
-import { Dropdown, Heading, Text } from '@phpsoftbox/react-softbox';
+import { Heading, Text } from '@phpsoftbox/react-softbox';
 import { Drawer } from '../../../Components/Drawer';
 import { DocsSearch, SearchEntry } from '../../../Components/DocsSearch';
+import { DocsVersionDropdown, type DocumentationVersionItem, type DocumentationVersions } from '../../../Components/DocsVersionDropdown';
 import { MarkdownDocument } from '../../../Components/MarkdownDocument';
 import { MdxDocument } from '../../../Components/MdxDocument';
 import { usePageScrollRestoration } from '../../../Components/usePageScrollRestoration';
@@ -99,25 +100,6 @@ type DocumentationDocument =
       toc: TocItem[];
       diagnostics: Diagnostic[];
     };
-
-type DocumentationVersionItem = {
-  version: string;
-  label: string;
-  status: 'current' | 'supported' | 'archived' | string;
-  href?: string;
-  docs_enabled?: boolean;
-  current?: boolean;
-  archived_at?: string;
-  released_at?: string;
-};
-
-type DocumentationVersions = {
-  enabled?: boolean;
-  current?: string;
-  selected?: DocumentationVersionItem | null;
-  all_href?: string;
-  items?: DocumentationVersionItem[];
-};
 
 export type DocumentationProps = {
   title: string;
@@ -692,49 +674,6 @@ function GeneratedIndexDocument({
 
       <SectionOverview items={document.items} ui={ui} />
     </div>
-  );
-}
-
-function DocsVersionDropdown({ versions, ui }: { versions?: DocumentationVersions; ui: SiteUiText }) {
-  const items = (versions?.items ?? []).filter((item) => item.docs_enabled === true && Boolean(item.href));
-  const selected = versions?.selected ?? items.find((item) => item.current) ?? items[0] ?? null;
-
-  if (versions?.enabled !== true || selected === null || items.length === 0) {
-    return null;
-  }
-
-  return (
-    <Dropdown
-      align="right"
-      placement="down"
-      className="docs-version-dropdown"
-      triggerClassName="docs-version-trigger"
-      triggerAriaLabel={ui.versionsLabel ?? 'Версия документации'}
-      trigger={[
-        <span key="label" className="docs-version-current">{selected.label}</span>,
-        <span key="caret" className="docs-version-caret" aria-hidden="true" />,
-      ]}
-    >
-      <Dropdown.Nav className="docs-version-menu">
-        {items.map((item) => (
-          <Dropdown.Item
-            key={item.version}
-            href={item.current ? undefined : item.href}
-            className={`docs-version-menu-item${item.current ? ' docs-version-menu-item-current' : ''}`}
-          >
-            {item.label}
-          </Dropdown.Item>
-        ))}
-        {versions?.all_href ? (
-          <>
-            <Dropdown.Separator />
-            <Dropdown.Item href={versions.all_href} className="docs-version-menu-all">
-              {ui.allVersions ?? 'Все версии'}
-            </Dropdown.Item>
-          </>
-        ) : null}
-      </Dropdown.Nav>
-    </Dropdown>
   );
 }
 
